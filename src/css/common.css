@@ -1,0 +1,14 @@
+.text-align-center {
+  text-align: center;
+}
+.text-red {
+  color: red;
+}
+a {
+  text-decoration: none;
+}
+.flex-center {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
