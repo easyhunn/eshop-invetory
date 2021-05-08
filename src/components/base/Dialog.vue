@@ -42,7 +42,7 @@
         <label for="">
           Nhóm hàng hoá
         </label>
-        <AutocompleteInput />
+        <AutocompleteInput style="z-index:11;"/>
       </div>
       <div class="dialog-row">
         <label for="">
@@ -66,9 +66,7 @@
         <label for="">
           Đơn vị tính 
         </label>
-        <div class="input-group">
-           <AutocompleteInput />
-        </div>
+        <AutocompleteInput />
       </div>
 
       <div class="dialog-row">
@@ -92,7 +90,7 @@
           <input style="min-width: 283px;" type="text" class="right-input-side" />
         </div> -->
       </div>
-      <div class="dialog-row">
+      <div class="dialog-row" v-show="showSubtable">
         <label for="">
           Chi tiết thuộc tính
         </label>
@@ -318,7 +316,8 @@ data: function () {
         InventoryItem: {
             InventoryIteamGroup: ""
         },
-        items: ["đồ ăn", "đồ uống"]
+        items: ["đồ ăn", "đồ uống"],
+        showSubtable: false
     }
 },
 props: {
@@ -332,7 +331,17 @@ components: {
 methods: {
   chooseImg() {
     document.getElementById("img").click();
-  }
+  },
+  
+},
+created: function () {
+  this.$root.$on("newColorInput", (e) => {
+    if (e.length > 0) {
+      this.showSubtable = true;
+    } else {
+      this.showSubtable = false;
+    }
+  })
 }
 
 }

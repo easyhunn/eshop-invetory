@@ -1,6 +1,6 @@
 <template>
-  <div ref="inputGroup" class="input-group">
-    <autocomplete
+  <div class="input-group">
+    <!-- <autocomplete
       class="input-container"
       :source="[
         { id: 1, name: 'abc' },
@@ -11,30 +11,65 @@
       name="abc"
       @nothingSelected="something()"
     >
-    </autocomplete>
-    <div class="input-symbol d-icon icon-quick-add right-input-side"></div>
+    </autocomplete> -->
+  
+    <vue-autosuggest
+      class="input-container"
+      v-model="query"
+      :suggestions="filteredOptions"
+      @focus="focusMe"
+      @click="clickHandler"
+      @input="onInputChange"
+      @selected="onSelected"
+      @blur="onBlur"
+      :render-suggestion="renderSuggestion"
+      :get-suggestion-value="getSuggestionValue"
+      :input-props="{id:'autosuggest__input', placeholder:'Nhập để tìm kiếm'}">
+      <div slot-scope="{suggestion}" style="display: flex; align-items: center;">
+        <div style="{ display: 'flex', color: 'navyblue'}">{{suggestion.item.name}}</div>
+      </div>
+    </vue-autosuggest>
+
+    <div ref="inputSymbol" class="input-symbol d-icon icon-quick-add right-input-side"></div>
   </div>
+  
 </template>
 <style lang="scss">
 .input-container {
-  width: 210px !important;
-  padding: 0px !important;
-  border: none !important;
-  img {
-    width: 0px !important;
-  }
-  div {
-    padding: 0px !important;
-    border: none !important;
-  }
-  ul {
-    width: calc(100% + 29px);
-  }
   input {
     background: url("../../assets/Icon/arrow-down-line.png");
     background-repeat: no-repeat;
     background-position-x: calc(100% - 5px);
     background-position-y: 50%;
+    padding: 5px 10px !important;
+    border-right: none;
+    border-radius: 3px 0 0 3px;
+    height: 22px !important;
+  }
+  input:focus {
+    border-right: none !important;
+  }
+  div.autosuggest__results-container {
+    background-color: white !important;
+    width: calc(100% + 30px);
+    ul {
+      margin-top: 5px !important;
+      list-style-type: none;
+      width: 100%;
+      padding: 0 !important;
+      max-height: 300px;
+      overflow-y: auto;
+      li {
+        padding: 0 2px;
+        cursor: pointer;
+      }
+      li:hover {
+        .list-content {
+          background-color: #6b6f9d !important;
+          color: #fff;
+        }
+      }
+    }
   }
 }
 .border-focus {
@@ -52,6 +87,7 @@
   border-right: none !important;
 }
 .input-group {
+  z-index: 10;
   flex-direction: row;
   input {
     width: 189px;
@@ -74,16 +110,80 @@
 </style>
 <script>
 import Autocomplete from "vuejs-auto-complete";
-
+import { VueAutosuggest } from 'vue-autosuggest';
 export default {
   components: {
     Autocomplete,
+    VueAutosuggest
+  },
+  
+  data() {
+    return {
+      query: "",
+      selected: "",
+      suggestions: [
+        {
+          data: [
+            { id: 1, name: "Frodo", race: "Hobbit", avatar: "https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/Elijah_Wood_as_Frodo_Baggins.png/220px-Elijah_Wood_as_Frodo_Baggins.png" },
+            { id: 2, name: "Samwise", race: "Hobbit", avatar: "https://upload.wikimedia.org/wikipedia/en/thumb/7/7b/Sean_Astin_as_Samwise_Gamgee.png/200px-Sean_Astin_as_Samwise_Gamgee.png" },
+            { id: 3, name: "Gandalf", race: "Maia", avatar: "https://upload.wikimedia.org/wikipedia/en/thumb/e/e9/Gandalf600ppx.jpg/220px-Gandalf600ppx.jpg" },
+            { id: 4, name: "Aragorn", race: "Human", avatar: "https://upload.wikimedia.org/wikipedia/en/thumb/3/35/Aragorn300ppx.png/150px-Aragorn300ppx.png" },
+            { id: 4, name: "Aragorn", race: "Human", avatar: "https://upload.wikimedia.org/wikipedia/en/thumb/3/35/Aragorn300ppx.png/150px-Aragorn300ppx.png" },
+            { id: 4, name: "Aragorn", race: "Human", avatar: "https://upload.wikimedia.org/wikipedia/en/thumb/3/35/Aragorn300ppx.png/150px-Aragorn300ppx.png" },
+ { id: 1, name: "Frodo", race: "Hobbit", avatar: "https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/Elijah_Wood_as_Frodo_Baggins.png/220px-Elijah_Wood_as_Frodo_Baggins.png" },
+            { id: 2, name: "Samwise", race: "Hobbit", avatar: "https://upload.wikimedia.org/wikipedia/en/thumb/7/7b/Sean_Astin_as_Samwise_Gamgee.png/200px-Sean_Astin_as_Samwise_Gamgee.png" },
+            { id: 3, name: "Gandalf", race: "Maia", avatar: "https://upload.wikimedia.org/wikipedia/en/thumb/e/e9/Gandalf600ppx.jpg/220px-Gandalf600ppx.jpg" },
+            { id: 4, name: "Aragorn", race: "Human", avatar: "https://upload.wikimedia.org/wikipedia/en/thumb/3/35/Aragorn300ppx.png/150px-Aragorn300ppx.png" },
+            { id: 4, name: "Aragorn", race: "Human", avatar: "https://upload.wikimedia.org/wikipedia/en/thumb/3/35/Aragorn300ppx.png/150px-Aragorn300ppx.png" },
+            { id: 4, name: "Aragorn", race: "Human", avatar: "https://upload.wikimedia.org/wikipedia/en/thumb/3/35/Aragorn300ppx.png/150px-Aragorn300ppx.png" },
+             { id: 1, name: "Frodo", race: "Hobbit", avatar: "https://upload.wikimedia.org/wikipedia/en/thumb/4/4e/Elijah_Wood_as_Frodo_Baggins.png/220px-Elijah_Wood_as_Frodo_Baggins.png" },
+            { id: 2, name: "Samwise", race: "Hobbit", avatar: "https://upload.wikimedia.org/wikipedia/en/thumb/7/7b/Sean_Astin_as_Samwise_Gamgee.png/200px-Sean_Astin_as_Samwise_Gamgee.png" },
+            { id: 3, name: "Gandalf", race: "Maia", avatar: "https://upload.wikimedia.org/wikipedia/en/thumb/e/e9/Gandalf600ppx.jpg/220px-Gandalf600ppx.jpg" },
+            { id: 4, name: "Aragorn", race: "Human", avatar: "https://upload.wikimedia.org/wikipedia/en/thumb/3/35/Aragorn300ppx.png/150px-Aragorn300ppx.png" },
+            { id: 4, name: "Aragorn", race: "Human", avatar: "https://upload.wikimedia.org/wikipedia/en/thumb/3/35/Aragorn300ppx.png/150px-Aragorn300ppx.png" },
+            { id: 4, name: "Aragorn", race: "Human", avatar: "https://upload.wikimedia.org/wikipedia/en/thumb/3/35/Aragorn300ppx.png/150px-Aragorn300ppx.png" }
+
+          ]
+        }
+      ]
+    };
+  },
+  computed: {
+    filteredOptions() {
+      return [
+        { 
+          data: this.suggestions[0].data.filter(option => {
+            return option.name.toLowerCase().indexOf(this.query.toLowerCase()) > -1;
+          })
+        }
+      ];
+    }
   },
   methods: {
-    something() {
-      console.log("??");
+    clickHandler(item) {
+      // event fired when clicking on the input
     },
-  },
-  mounted: function() {},
+    onSelected(item) {
+      this.selected = item.item;
+    },
+    onInputChange(text) {
+    },
+    /**
+     * This is what the <input/> value is set to when you are selecting a suggestion.
+     */
+    getSuggestionValue(suggestion) {
+      return suggestion.item.name;
+    },
+    focusMe(e) {
+      this.$refs.inputSymbol.style.borderColor = "#636dde";
+      this.$refs.inputSymbol.style.borderLeftColor= "#d2d2d2";
+    },
+    onBlur(){
+        this.$refs.inputSymbol.style.borderColor= "#d2d2d2";
+    },
+    renderSuggestion(suggestion) {
+        return this.$createElement('div', { 'style': {height: '22px' }, class: "list-content" }, suggestion.item.name);
+    },
+  }
 };
 </script>

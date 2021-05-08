@@ -52,3 +52,13 @@
   color: white;
   height: 22px;
 }
+.d-input {
+  border-radius: 3px;
+  border: 1px solid #d2d2d2;
+  padding: 5px 10px;
+  font-size: 13px;
+  outline: none !important;
+}
+.d-input:focus {
+  border-color: #636dde;
+}

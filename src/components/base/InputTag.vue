@@ -1,7 +1,7 @@
 <template>
     <div class="input-tag-container">
         <div style="min-width: 137px;" class="input-symbol left-input-side ">Màu sắc</div>
-        <InputTag class="input-content"/>
+        <InputTag class="input-content" @input="onInput"/>
     </div>
 </template>
 <style lang="scss">
@@ -9,8 +9,11 @@
     background-color: rgb(43, 49, 115) !important;
     margin-left: 5px !important;
     border-radius: 3px !important;
+    height: 22px !important;
+    margin-top: 3px !important;
     .remove {
-        padding: 3px !important;    
+        padding: 3px !important;
+        color: white !important;    
     }
 }
 
@@ -19,15 +22,13 @@
     height: 32px !important;
     input {
         width: 189px;
-        height: 32px !important;
-        padding: 2px 5px !important;
+        height: 30px !important;
+        padding: 0px 5px !important;
     }
-    span {
-        height: 80% !important;
+    span {  
         background-color: rgb(43, 49, 115) !important;
         color: #fff !important;
         padding: 1px !important;
-        margin: 0 !important;
     }
 }
 </style>
@@ -62,6 +63,11 @@ import InputTag from 'vue-input-tag'
 export default {
     components:{
         InputTag
+    },
+    methods: {
+        onInput(e) {
+            this.$root.$emit("newColorInput", e);
+        }
     }
 }
 </script>
