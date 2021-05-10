@@ -4,6 +4,9 @@
 .text-red {
   color: red;
 }
+.border-red {
+  border: 1px solid red !important;
+}
 a {
   text-decoration: none;
 }

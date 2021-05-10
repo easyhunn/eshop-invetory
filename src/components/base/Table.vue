@@ -2,7 +2,7 @@
   <div class="h-table" ref="Table">
     <div class="h-table-header">
       <div class="h-cell flex-center" style="min-width:38px; max-width:38px;">
-        <input type="checkbox" />
+        <input type="checkbox" v-on:change="selectAllItem" ref="SelectAll"/>
       </div>
 
       <div class="cell-contain" style="min-width:100px; max-width:100px;">
@@ -278,11 +278,13 @@
     </div>
     <div class="h-table-body">
       <div ref="noContent" class="no-content">Không có dữ liệu</div>
-      <table>
+      <table ref="Table">
         <tbody ref="tbody">
-          <tr class="h-row">
+          <tr class="h-row" v-on:click="onRowSelect('1', 'bánh đậu xanh')" name="Bánh đậu xanh" id="1">
             <td class="flex-center" style="min-width:18px; max-width:18px; margin-left: -1px">
-              <input type="checkbox" />
+              <input type="checkbox"
+                v-on:change="checkBoxSelected('1', 'bánh đậu xanh', $event.target.checked)"
+              />
             </td>
             <td style="min-width:79px; max-width:79px;"></td>
             <td
@@ -304,15 +306,18 @@
             <td style="min-width:99px; max-width:99px;"></td>
             <td style="min-width:112px; max-width:112px;"></td>
           </tr>
-          <tr class="h-row">
+          <tr class="h-row"  v-on:click="onRowSelect('2', 'bánh đậu đỏ')" name="Bánh đậu xanh" id="2">
             <td class="flex-center" style="min-width:18px; max-width:18px; margin-left: -1px">
-              <input type="checkbox" />
+              <input type="checkbox" 
+                :checked="false"
+                
+                v-on:change="checkBoxSelected('2', 'bánh đậu đỏ', $event.target.checked)"/>
             </td>
             <td style="min-width:79px; max-width:79px;"></td>
             <td
               style="min-width:209px; flex-basis:calc(100vw - 1158px); flex-grow: 0; flex-shrink: 0"
             >
-              Bánh đậu xanh
+              Bánh đậu đỏ
             </td>
             <td style="min-width:109px; max-width:109px;">
               something 1
@@ -491,9 +496,24 @@ export default Vue.extend({
       pageIndex: 1,
       totalPage: 0,
       totalRecord: 0,
+      selectedRow: "",
+      ItemNameSelected: "",
+      listIdSelected: [""],
+      itemIds: ["1", "2"]
     };
   },
   methods: {
+    selectAllItem() {
+      let source = this.$refs.SelectAll as HTMLInputElement;
+      var checkboxes = document.querySelectorAll('input[type="checkbox"]') ;
+
+      for (var i = 0; i < checkboxes.length; i++) {
+        let checkbox = checkboxes[i] as HTMLInputElement;
+        checkbox.checked = source.checked;
+        if (this.itemIds[i])
+        this.checkBoxSelected(this.itemIds[i], "", checkbox.checked);
+      }
+    },
     //Thay đổi kiểu lọc
     //<param>
     // type: kiểu lọc
@@ -523,6 +543,62 @@ export default Vue.extend({
           break;
       }
     },
+    //Khi hàng được chọn
+    onRowSelect (id:string, name:string) {
+      //Kiểm trang list selected
+      if (!this.listIdSelected.includes(this.selectedRow)) {
+      //Xóa hiệu ứng selected từ hàng cũ
+        if (this.selectedRow) {
+          var rowSelected = document.getElementById(this.selectedRow) as HTMLTableRowElement;
+          if (rowSelected.rowIndex % 2 == 0)
+            rowSelected.style.backgroundColor = "#fff";
+          else 
+            rowSelected.style.backgroundColor = "#f6f6f6";
+        }
+      }
+      //chọn hàng
+      this.rowSelected(id, name);
+      
+    },
+     //Sự kiện khi hàng đã được chọn
+    // Created By: VM Hùng (14/04/2021)
+    rowSelected (id:string, name:string) {
+      //selected hàng mới
+      this.selectedRow = id;
+      this.ItemNameSelected = name; 
+      var rowSelect = document.getElementById(id);
+      if (rowSelect)
+        rowSelect.style.backgroundColor = "#E2E4F1";
+      //Gửi id hàng được select về root
+      this.$root.$emit("rowSelect", id, name);
+    },
+    // Khi ô check bõ được chọn
+    checkBoxSelected (id:string, name:string, source:any) {
+      var rowSelect = document.getElementById(id);
+      // Nếu ô check box trạng thái chọn
+      if (source) {
+        this.listIdSelected.push(id);
+        if (rowSelect) rowSelect.style.backgroundColor = "#E2E4F1";
+      } else {
+        let index = this.listIdSelected.indexOf(id);
+        if (index > -1) {
+          this.listIdSelected.splice(index, 1);
+        }
+        var rowSelecte = document.getElementById(id) as HTMLTableRowElement;
+        if (rowSelecte.rowIndex % 2 == 0)
+          rowSelecte.style.backgroundColor = "#fff";
+        else 
+          rowSelecte.style.backgroundColor = "#f6f6f6";
+      }
+    }
   },
+  updated: function () {
+    this.selectedRow = "";
+    let table = this.$refs.Table as HTMLTableElement;
+    let firstRow = table.children[0] as HTMLElement;
+    if (firstRow) {
+      firstRow.click();
+    }
+  }
 });
 </script>

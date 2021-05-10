@@ -10,7 +10,7 @@
         </div>
         <div class="t-body">
             <table>
-                <tr v-for="(Inventory,i) in InvertoryItems" :key="i">
+                <tr v-for="(Inventory,i) in InventoryItems" :key="i">
                     <td class="edit-able" style="min-width:363px; flex-basis:calc(100% - 605px); flex-grow: 0; flex-shrink: 0">
                         {{Inventory.InventoryItemName}}
                         <input type="text" 
@@ -99,26 +99,44 @@ import CommonFuncion from "../../services/common";
 export default Vue.extend({
     data: function () {
         return {
-            // Inventory: {
-            //     InventoryItemName: "Bánh Đậu Xanh",
-            //     InventoryItemGroup: "",
-            //     InventoryItemCode: "BDX01",
-            //     PurchasePrice: "10",
-            //     SalePrice: "11"
-            // },
-            InvertoryItems: [] as Array<InventoryItem>
+            InventoryItems: [] as Array<InventoryItem>
         }
     },
-
+    props: {
+        InventoryItem: {type: Object as () => InventoryItem}
+    },
     components: { Table },
+    watch: {
+        "InventoryItem.InventoryItemName"() {
+            this.InventoryItems.forEach(e => {
+                e.InventoryItemName = this.InventoryItem.InventoryItemName + " (" + e.Color + ")";  
+            })
+        },
+        "InventoryItem.InventoryItemCode"() {
+            this.InventoryItems.forEach(e => {
+                e.InventoryItemCode = this.InventoryItem.InventoryItemCode + "-" + e.Prefix;  
+            })
+        }
+    },
     created: function () {
+        //Khi thông tin thuộc tính màu sắc nhập vào thay đổi
+        //Created By: VM Hùng (04/09/2021)
         this.$root.$on("newColorInput", (e:Array<string>) => {
-            this.InvertoryItems = [];
-            e.forEach((element, i) => {
-                let prefix = CommonFuncion.removeVietnameseTones(element);
-                prefix = CommonFuncion.getFirstLetter(prefix).toUpperCase()
-                let InventoryItem:InventoryItem = {InventoryItemName: "Banh dau xanh ("+element+")", InventoryItemCode: "BDX-01-" + prefix, InventoryItemGroup: "", PurchasePrice: 11, SalePrice: 12};
-                this.InvertoryItems.push(InventoryItem)
+            this.InventoryItems = [];
+            // create list sub invetory item with properti
+            e.forEach((color, i) => {
+                let colorEnglish = CommonFuncion.removeVietnameseTones(color);
+                let prefix = CommonFuncion.getFirstLetter(colorEnglish).toUpperCase();
+                if (prefix.length < 2) {
+                    prefix += CommonFuncion.getFirstLetter(colorEnglish.substring(1)).toUpperCase(); 
+                }
+                let InventoryItemWithProperty:InventoryItem = {InventoryItemName: ""};
+                Object.assign(InventoryItemWithProperty, this.InventoryItem)
+                InventoryItemWithProperty.InventoryItemName += " (" + color +")";
+                InventoryItemWithProperty.InventoryItemCode += "-"+ prefix;
+                InventoryItemWithProperty.Prefix = prefix;
+                InventoryItemWithProperty.Color = color;
+                this.InventoryItems.push(InventoryItemWithProperty);
             });
         })
     }

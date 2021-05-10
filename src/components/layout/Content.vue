@@ -50,7 +50,7 @@
         </dir>
       </div>
     </div>
-    <Dialog  ref="dialog" :hideDialog="hideDialog"/>
+    <Dialog  ref="Dialog" v-show="showDialog" :hideDialog="hideDialog"/>
 
     <!-- region alert delete -->
     <div class="alert-delete" v-if="false">
@@ -373,6 +373,8 @@ export default {
   methods: {
     displayDialog() {
       this.showDialog = true;
+      this.$refs.Dialog.showDialog();
+      
     },
     hideDialog() {
       this.showDialog = false;
