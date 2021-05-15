@@ -24,7 +24,7 @@
       @blur="onBlur"
       :render-suggestion="renderSuggestion"
       :get-suggestion-value="getSuggestionValue"
-      :input-props="{id:'autosuggest__input', placeholder:'Nhập để tìm kiếm'}">
+      :input-props="{id:'value', placeholder:'Nhập để tìm kiếm'}">
       <div slot-scope="{suggestion}" style="display: flex; align-items: center;">
         <div style="{ display: 'flex', color: 'navyblue'}">{{suggestion.item.name}}</div>
       </div>
@@ -161,6 +161,11 @@ export default {
     renderSuggestion(suggestion) {
         return this.$createElement('div', { 'style': {height: '22px', padding: '2px 5px' }, class: "list-content" }, suggestion.item.name);
     },
+  },
+  watch:{
+    value() {
+      this.query = this.value;
+    }
   }
 };
 </script>

@@ -1,0 +1,13 @@
+const DEFAULT_ADDRESS = "https://localhost:44346/api/Inventory/";
+const ADDRESS = Object.freeze({
+  PAGING: DEFAULT_ADDRESS + "paging?",
+  INSERT: DEFAULT_ADDRESS,
+  MAXCODE: DEFAULT_ADDRESS + "MaxCode/",
+  GET_BY_SKUCODE: DEFAULT_ADDRESS + "SKUCode/",
+  GET_BY_ID: DEFAULT_ADDRESS,
+  DEFAULT_ADDRESS: DEFAULT_ADDRESS,
+  DELETE: DEFAULT_ADDRESS + "byId/",
+  DELETE_MULTIPLE: DEFAULT_ADDRESS + "multiple"
+});
+
+export default ADDRESS

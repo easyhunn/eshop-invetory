@@ -19,18 +19,18 @@
             class="edit-able"
             style="min-width:363px; flex-basis:calc(100% - 605px); flex-grow: 0; flex-shrink: 0"
           >
-            {{ Inventory.InventoryItemName }}
+            {{ Inventory.InventoryName }}
             <input
               type="text"
-              v-model="Inventory.InventoryItemName"
+              v-model="Inventory.InventoryName"
               class="hidden-input d-input"
             />
           </td>
           <td class="edit-able" style="max-width:128px; min-width:128px">
-            {{ Inventory.InventoryItemCode }}
+            {{ Inventory.SKUCode }}
             <input
               type="text"
-              v-model="Inventory.InventoryItemCode"
+              v-model="Inventory.SKUCode"
               class="hidden-input d-input"
             />
           </td>
@@ -122,16 +122,16 @@ export default Vue.extend({
   },
   components: { Table },
   watch: {
-    "InventoryItem.InventoryItemName"() {
+    "InventoryItem.InventoryName"() {
       this.InventoryItems.forEach((e) => {
-        e.InventoryItemName =
-          this.InventoryItem.InventoryItemName + " (" + e.Color + ")";
+        e.InventoryName =
+          this.InventoryItem.InventoryName + " (" + e.Color + ")";
       });
     },
     "InventoryItem.InventoryItemCode"() {
       this.InventoryItems.forEach((e) => {
-        e.InventoryItemCode =
-          this.InventoryItem.InventoryItemCode + "-" + e.Prefix;
+        e.SKUCode =
+          this.InventoryItem.SKUCode + "-" + e.Prefix;
       });
     },
   },
@@ -150,11 +150,11 @@ export default Vue.extend({
           ).toUpperCase();
         }
         let InventoryItemWithProperty: InventoryItem = {
-          InventoryItemName: "",
+          InventoryName: "",
         };
         Object.assign(InventoryItemWithProperty, this.InventoryItem);
-        InventoryItemWithProperty.InventoryItemName += " (" + color + ")";
-        InventoryItemWithProperty.InventoryItemCode += "-" + prefix;
+        InventoryItemWithProperty.InventoryName += " (" + color + ")";
+        InventoryItemWithProperty.SKUCode += "-" + prefix;
         InventoryItemWithProperty.Prefix = prefix;
         InventoryItemWithProperty.Color = color;
         this.InventoryItems.push(InventoryItemWithProperty);

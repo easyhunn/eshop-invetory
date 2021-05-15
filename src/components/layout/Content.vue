@@ -24,18 +24,38 @@
       </button>
     </div>
     <div class="table">
-      <Table/>
+      <Table />
     </div>
     <div class="footer">
       <div class="pagging">
         <div class="pagging-left">
-          <button ref="firstPage" v-on:click="firstPage" class="d-icon icon-double-prepage"></button>
-          <button ref="prevPage" v-on:click="prevPage" class="d-icon icon-prepage "></button>
+          <button
+            ref="firstPage"
+            v-on:click="firstPage"
+            class="d-icon icon-double-prepage"
+          ></button>
+          <button
+            ref="prevPage"
+            v-on:click="prevPage"
+            class="d-icon icon-prepage "
+          ></button>
           <div style="padding: 0 4px">Trang</div>
-          <input type="number" v-model="pageIndex" v-on:keyup.enter="changePageIndex"/>
-          <div style="padding: 0 10px 0 4px">Trên {{totalPage}}</div>
-          <button v-on:click="nextPage" ref="nextPage" class="d-icon icon-nextpage"></button>
-          <button v-on:click="lastPage" ref="lastPage" class="d-icon icon-double-nextpage"></button>
+          <input
+            type="number"
+            v-model="pageIndex"
+            v-on:keyup.enter="changePageIndex"
+          />
+          <div style="padding: 0 10px 0 4px">Trên {{ totalPage }}</div>
+          <button
+            v-on:click="nextPage"
+            ref="nextPage"
+            class="d-icon icon-nextpage"
+          ></button>
+          <button
+            v-on:click="lastPage"
+            ref="lastPage"
+            class="d-icon icon-double-nextpage"
+          ></button>
           <button class="d-icon icon-reload"></button>
           <select v-model="pageSize" name="" id="" @change="changePageSize">
             <option value="15">15</option>
@@ -45,13 +65,21 @@
           </select>
         </div>
         <dir class="pagging-right">
-          Hiển thị {{(pageIndex-1)*pageSize + 1}}
-          -{{((pageIndex)*pageSize < totalRecord) ? (pageIndex)*pageSize : totalRecord}} 
-          Trên {{totalRecord}} kết quả
+          Hiển thị {{ (pageIndex - 1) * pageSize + 1 }} -{{
+            pageIndex * pageSize < totalRecord
+              ? pageIndex * pageSize
+              : totalRecord
+          }}
+          Trên {{ totalRecord }} kết quả
         </dir>
       </div>
     </div>
-    <Dialog ref="Dialog" v-show="showDialog" :hideDialog="hideDialog" />
+    <Dialog
+      ref="Dialog"
+      v-show="showDialog"
+      :hideDialog="hideDialog"
+      @close="hideDialog"
+    />
 
     <!-- region alert delete -->
     <div class="alert-delete" v-if="showDeleteAlert">
@@ -66,12 +94,12 @@
         <div class="alert-content">
           <div class="d-icon m-icon-help m-icon"></div>
           <div class="alert-message">
-            Bạn có chắc chắn muốn xóa <b></b> khỏi danh sách cửa hàng.
+            Bạn có chắc chắn muốn xóa <b>{{selectedInventory}}</b> khỏi danh sách cửa hàng.
           </div>
         </div>
         <div class="alert-footer">
           <div class="alert-group-button">
-            <button class="button-default btn-red">
+            <button v-on:click="deleteInventory" class="button-default btn-red">
               <div class="d-icon icon-delete-white"></div>
               <div class="d-text">Xóa</div>
             </button>
@@ -350,14 +378,15 @@
 }
 </style>
 <script lang="ts">
-import Vue from 'vue'
+import Vue from "vue";
 
 import Table from "../base/the-table.vue";
 import Dialog from "../base/the-dialog.vue";
 import Alert from "../base/the-alert.vue";
 import AlertErrorDefault from "../base/alert-error-default.vue";
-import {InventoryFilter} from "../../store/inventory-filter";
-import { mapGetters, mapState } from 'vuex';
+import { InventoryFilter } from "../../store/inventory-filter";
+import {InventoryStore} from "../../store/inventory";
+import { mapGetters, mapState } from "vuex";
 
 export default Vue.extend({
   name: "Content",
@@ -374,33 +403,46 @@ export default Vue.extend({
       showDeleteAlert: false,
       pageSize: 15,
       pageIndex: 1,
-      totalPage: 0
+      totalPage: 0,
+      selectedInventory: ""
     };
   },
   methods: {
+    // Xoá hàng hoá được chọn
+    //Created By: VM Hùng(15/05/2021)
+    deleteInventory() {
+      //Xoá bản ghi đang được chọn
+      if (this.$store.getters.listIdsSize > 1) {
+        this.$store.dispatch("DeleteInventories");
+      } else {
+        this.$store.dispatch("DeleteInventory");
+      }
+
+      this.hideDeleteAlert();
+    },
     //Chuyển sang trang tiếp theo
-    nextPage () {
-      if (this.pageIndex < this.totalPage){
+    //Created By: VM Hùng(15/05/2021)
+    nextPage() {
+      if (this.pageIndex < this.totalPage) {
         this.pageIndex++;
         this.changePageIndex();
+        
       }
-      
     },
     //Chuyển về trang trước
-    prevPage () {
+    prevPage() {
       if (this.pageIndex > 1) {
         this.pageIndex--;
         this.changePageIndex();
       }
     },
-    lastPage () {
+    lastPage() {
       if (this.pageIndex != this.totalPage) {
         this.pageIndex = this.totalPage;
         this.changePageIndex();
       }
-
     },
-    firstPage () {
+    firstPage() {
       if (this.pageIndex != 1) {
         this.pageIndex = 1;
         this.changePageIndex();
@@ -413,12 +455,11 @@ export default Vue.extend({
       InventoryFilter.commit("setPageSize", this.pageSize);
       // load data
       await this.$store.dispatch("getByPaging");
-      
     },
     validatePageIndex() {
       // Chuẩn hoá thứ tự trang
-      if (this.pageIndex > this.totalPage)this.pageIndex = this.totalPage
-      if (this.pageIndex < 1) this.pageIndex = 1
+      if (this.pageIndex > this.totalPage) this.pageIndex = this.totalPage;
+      if (this.pageIndex < 1) this.pageIndex = 1;
     },
     async changePageIndex() {
       // Chuẩn hoá thứ tự trang
@@ -440,20 +481,19 @@ export default Vue.extend({
         firstPage.classList.remove("disable");
       }
       if (this.pageIndex >= this.totalPage) {
-        lastPage.classList.add("disable")
+        lastPage.classList.add("disable");
         nextPage.classList.add("disable");
       } else {
-        
-        lastPage.classList.remove("disable")
+        lastPage.classList.remove("disable");
         nextPage.classList.remove("disable");
       }
     },
     // Hiện dialog
-    //type: 
+    //type:
     // 1: thêm
     // 3: sửa
     // 2: nhân bản
-    displayDialog(type:number) {
+    displayDialog(type: number) {
       this.showDialog = true;
       let dialog = this.$refs.Dialog as any;
       dialog.showDialog(type);
@@ -469,41 +509,38 @@ export default Vue.extend({
     },
     //Hiện dialog xoá
     displayDeleteAlert() {
+      this.selectedInventory = InventoryStore.state.inventoryName;
       this.showDeleteAlert = true;
     },
     //Ẩn dialog xoá
     hideDeleteAlert() {
       this.showDeleteAlert = false;
     },
-    
   },
   computed: {
     ...mapGetters({
       totalRecord: "totalRecord",
-      loading: "loading"
+      loading: "loading",
     }),
   },
-  
+
   watch: {
     totalRecord() {
-      let extend = this.totalRecord%this.pageSize;
-      let total:any = this.totalRecord / this.pageSize;
+      let extend = this.totalRecord % this.pageSize;
+      let total: any = this.totalRecord / this.pageSize;
       if (extend == 0) {
-        this.totalPage = parseInt(total)
+        this.totalPage = parseInt(total);
       } else {
         this.totalPage = parseInt(total) + 1;
       }
     },
     
   },
-  updated: function () {
-    console.log(this.loading)
-  },
-  mounted: function () {
+  mounted: function() {
     let prevPage = this.$refs.prevPage as HTMLElement;
     prevPage.classList.add("disable");
     let firstPage = this.$refs.firstPage as HTMLElement;
     firstPage.classList.add("disable");
-  }
-})
+  },
+});
 </script>

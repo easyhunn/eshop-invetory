@@ -5,48 +5,57 @@ import InventoryService from "../services/inventory-service";
 
 Vue.use(Vuex);
 
-export default new Vuex.Store({
-  state: {
-    inventories: Array<InventoryItem>(),
-    
-  },
+//Thông tin hàng hoá đang được chọn
+export const InventoryStore = new Vuex.Store({
+         state: {
+           inventory: {} as InventoryItem,
+           inventoryId: "",
+           inventoryName: "",
+         },
 
-  getters: {
-    //map
-    // message(state: InventoryItem) {
-    //   return state.message;
-    // },
-    inventories(state) {
-      return state.inventories;
-    },
-  },
+         getters: {
+           //map
+           // message(state: InventoryItem) {
+           //   return state.message;
+           // },
+           inventory(state) {
+             return state.inventory;
+           },
+         },
 
-  mutations: {
-    // updateMessage(state: InventoryItem, message: string) {
-    //  state.message = message;
-    // },
-    insertInventory(state, inventory) {
-      console.log(inventory);
-      state.inventories.push(inventory);
-    },
-  },
+         mutations: {
+           //
+           //Created By: VM Hùng (15/05/2021)
+           setInventory(state, inventory) {
+             state.inventory = inventory;
+           },
+           setInventoryId(state, inventoryId) {
+             state.inventoryId = inventoryId;
+           },
+           setInventoryName(state, inventoryName) {
+             state.inventoryName = inventoryName;
+           },
+         },
 
-  actions: {
-    // setMesssage(
-    //   // action: ActionContext<Array<InventoryItem>, Array<InventoryItem>>,
-    //   message: string
-    // ): void {
-    //   action.commit("getByPaging");
-    // },
-    async getByPaging(context, inventoryModel: InventoryItem) {
-      await InventoryService.getInventoriesByPaging().then((data: any) => {
-        context.commit("insertInventory", inventoryModel);
-      });
-    },
-  },
+         actions: {
+           // setMesssage(
+           //   // action: ActionContext<Array<InventoryItem>, Array<InventoryItem>>,
+           //   message: string
+           // ): void {
+           //   action.commit("getByPaging");
+           // },
+           //Lấy thông tin hàng hoá theo id
+           async getByInventoryId(context) {
+             await InventoryService.GetInventoryById(
+               this.state.inventoryId
+             ).then((data: any) => {
+               context.commit("setInventory", data.data);
+             });
+           },
+         },
 
-  modules: {},
-});
+         modules: {},
+       });
 
 // InventoryItemName: "",
 //     InventoryItemGroup: "",

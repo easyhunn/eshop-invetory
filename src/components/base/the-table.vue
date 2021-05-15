@@ -13,7 +13,7 @@
           <div class="filter">
             <a
               class="filter-type-selected"
-              v-on:click="showFilterType.InvetoryCode = true"
+              v-on:click="showFilterType.InventoryCode = true"
             >
               {{ selectedFilter.SKUCodeType }}
             </a>
@@ -24,12 +24,12 @@
             />
             <div
               class="mask"
-              v-on:click="showFilterType.InvetoryCode = false"
-              v-if="showFilterType.InvetoryCodeType"
+              v-on:click="showFilterType.n = false"
+              v-if="showFilterType.nType"
             ></div>
           </div>
         </div>
-        <ul class="filter-combo" v-if="showFilterType.InvetoryCode">
+        <ul class="filter-combo" v-if="showFilterType.n">
           <li class="filter-type" v-on:click="changeFilterType('*', 1)">
             * : Chứa
           </li>
@@ -301,7 +301,7 @@
       <table ref="Table">
         <tbody ref="Tbody">
           <tr class="h-row" v-for="(inventory, i) in inventories" :key="i" 
-                                    v-on:click="onRowSelect(inventory.InventoryId, 'bánh đậu xanh')" 
+                                    v-on:click="onRowSelect(inventory.InventoryId, inventory.InventoryName)" 
                                     name="Bánh đậu xanh" :id="inventory.InventoryId">
             <td class="flex-center" style="min-width:18px; max-width:18px; margin-left: -1px">
               <input type="checkbox"
@@ -313,7 +313,7 @@
             <td
               style="min-width:209px; flex-basis:calc(100vw - 1158px); flex-grow: 0; flex-shrink: 0"
             >
-              {{inventory.InventoryName}}
+              <a href="#">{{inventory.InventoryName}}</a>
             </td>
             <td style="min-width:109px; max-width:109px;">
               {{inventory.InventoryGroup}}
@@ -482,6 +482,7 @@
 import Vue, {PropType} from "vue";
 import { mapGetters } from "vuex";
 import {InventoryFilter} from "../../store/inventory-filter";
+import {InventoryStore} from "../../store/inventory";
 
 export default Vue.extend({
   name: "Table",
@@ -509,7 +510,7 @@ export default Vue.extend({
         Status: -1
       } ,
       showFilterType: {
-        InvetoryCode: false,
+        n: false,
         InventoryName: false,
         InventoryGroup: false,
         Unit: false,
@@ -523,14 +524,12 @@ export default Vue.extend({
       selectedRow: "",
       ItemNameSelected: "",
       listIdSelected: [""],
-      itemIds: ["1", "2"]
     };
   },
   methods: {
     selectAllItem() {
       let source = this.$refs.SelectAll as HTMLInputElement;
       var checkboxes = document.querySelectorAll('input[type="checkbox"]') ;
-
       try {
         for (var i = 1; i < checkboxes.length; i++) {
           let checkbox = checkboxes[i] as HTMLInputElement;
@@ -549,7 +548,7 @@ export default Vue.extend({
     changeFilterType(type: string, order: number) {
       switch (order) {
         case 1:
-          this.showFilterType.InvetoryCode = false;
+          this.showFilterType.n = false;
           this.selectedFilter.SKUCodeType = type;
           break;
         case 2:
@@ -577,15 +576,19 @@ export default Vue.extend({
     },
     //Khi hàng được chọn
     onRowSelect (id:string, name:string) {
-      //Kiểm trang list selected
+      //Kiểm trong list selected
       if (!this.listIdSelected.includes(this.selectedRow)) {
-      //Xóa hiệu ứng selected từ hàng cũ
-        if (this.selectedRow) {
-          var rowSelected = document.getElementById(this.selectedRow) as HTMLTableRowElement;
-          if (rowSelected.rowIndex % 2 == 0)
-            rowSelected.style.backgroundColor = "#fff";
-          else 
-            rowSelected.style.backgroundColor = "#f6f6f6";
+        //Xóa hiệu ứng selected từ hàng cũ
+        try {
+          if (this.selectedRow) {
+            var rowSelected = document.getElementById(this.selectedRow) as HTMLTableRowElement;
+            if (rowSelected.rowIndex % 2 == 0)
+              rowSelected.style.backgroundColor = "#fff";
+            else 
+              rowSelected.style.backgroundColor = "#f6f6f6";
+          }
+        } catch (e) {
+          console.log(e);
         }
       }
       //chọn hàng
@@ -596,13 +599,12 @@ export default Vue.extend({
     // Created By: VM Hùng (14/04/2021)
     rowSelect (id:string, name:string) {
       //selected hàng mới
+      
       this.selectedRow = id;
       this.ItemNameSelected = name; 
       var rowSelect = document.getElementById(id);
       if (rowSelect)
         rowSelect.style.backgroundColor = "#E2E4F1";
-      //Gửi id hàng được select về root
-      this.$root.$emit("rowSelect", id, name);
     },
     // Khi ô check bõ được chọn
     checkBoxSelected (id:string, name:string, source:any) {
@@ -613,6 +615,7 @@ export default Vue.extend({
         if (source) {
           //Thêm id vào danh sách các hàng hoá được chọn
           this.listIdSelected.push(id);
+          this.$store.commit("addSelectedId", id);
           if (rowSelect) rowSelect.style.backgroundColor = "#E2E4F1";
         } else {
           // xoá hàng hoá khỏi list id được chon
@@ -620,11 +623,13 @@ export default Vue.extend({
           if (index > -1) {
             this.listIdSelected.splice(index, 1);
           }
+          this.$store.commit("removeSelectedId", id);
           var rowSelecte = document.getElementById(id) as HTMLTableRowElement;
           if (rowSelecte.rowIndex % 2 == 0)
             rowSelecte.style.backgroundColor = "#fff";
           else 
             rowSelecte.style.backgroundColor = "#f6f6f6";
+
         }
       } catch(e) {
         console.log(e);
@@ -651,6 +656,13 @@ export default Vue.extend({
     ...mapGetters({
       inventories: "inventories",
     }),
+  },
+  watch: {
+    selectedRow() {
+      InventoryStore.commit("setInventoryId", this.selectedRow);
+      InventoryStore.commit("setInventoryName", this.ItemNameSelected);
+
+    }
   }
 });
 </script>

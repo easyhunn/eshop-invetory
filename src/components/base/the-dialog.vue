@@ -1,15 +1,15 @@
 <template>
   <div class="dialog">
     <div class="dialog-header">
-      <button class="button-default btn-1">
+      <button class="button-default btn-1" v-on:click="saveData()">
         <div class="d-icon icon-save"></div>
         <div class="d-text">Lưu</div>
       </button>
-      <button class="button-default btn-2">
+      <button class="button-default btn-2" v-on:click="saveAndDuplicate()">
         <div class="d-icon icon-duplicate-black"></div>
         <div class="d-text">Lưu và nhân bản</div>
       </button>
-      <button class="button-default btn-2">
+      <button class="button-default btn-2" v-on:click="saveAndAdd()">
         <div class="d-icon icon-plus"></div>
         <div class="d-text">Lưu và thêm mới</div>
       </button>
@@ -38,7 +38,7 @@
         <label for=""> Tên hàng hoá <span class="text-red">*</span> </label>
         <div class="input-group">
           <input ref="InventoryItemName" type="text" 
-            v-model="InventoryItem.InventoryItemName" 
+            v-model="InventoryItem.InventoryName" 
             v-on:blur="itemNameBlur">
           <div  ref="InventoryNameError" class="d-icon icon-exclamation"></div>
           <span class="input-required">
@@ -51,18 +51,36 @@
           Nhóm hàng hoá
         </label>
         <AutocompleteInput style="z-index:11;" 
-          :value="InventoryItem.InventoryItemGroup" 
+          :value="InventoryItem.InventoryGroup" 
           :suggestions="InventoryItemGroups"
-          @input="(e) => InventoryItem.InventoryItemGroup = e"/>
+          @input="(e) => InventoryItem.InventoryGroup = e"/>
       </div>
-      <div class="dialog-row">
+      <!-- <div class="dialog-row">
         <label for="">
           Mã SKU
         </label>
         <input type="text" placeholder="Hệ thống tự sinh khi bỏ trống" 
-          v-model="InventoryItem.InventoryItemCode"
+          v-model="InventoryItem.SKUCode"
           v-on:blur="generateInvetoryItemCode"
           />
+        <div  ref="SKUCodeError" class="d-icon icon-exclamation"></div>
+        <span class="input-required">
+            {{InventoryError.SKUCode}}
+        </span>
+      </div> -->
+      <div class="dialog-row">
+        <label for=""> Mã SKU </label>
+        <div class="input-group">
+          <input type="text"
+            ref="SKUCode"
+            placeholder="Hệ thống tự sinh khi bỏ trống" 
+            v-model="InventoryItem.SKUCode" 
+            v-on:blur="SKUCodeBlur">
+          <div  ref="SKUCodeError" class="d-icon icon-exclamation"></div>
+          <span class="input-required">
+              {{InventoryError.SKUCode}}
+          </span>
+        </div>
       </div>
       <div class="dialog-row">
         <label for="">
@@ -87,7 +105,7 @@
       </div>
 
       <div class="dialog-row">
-        <input type="checkbox" />
+        <input type="checkbox"   @change="changeStatus($event)"/>
         <span
           >Hiển thị trên màn hình bán hàng
           <span class="d-icon icon-question"></span
@@ -146,15 +164,15 @@
       </div>
     </div>
     <div class="dialog-footer">
-      <button class="button-default btn-1">
+      <button class="button-default btn-1" v-on:click="saveData()">
         <div class="d-icon icon-save"></div>
         <div class="d-text">Lưu</div>
       </button>
-      <button class="button-default btn-2">
-        <div class="d-icon icon-duplicate-black"></div>
+      <button class="button-default btn-2" v-on:click="saveAndDuplicate()">
+        <div class="d-icon icon-duplicate-black" ></div>
         <div class="d-text">Lưu và nhân bản</div>
       </button>
-      <button class="button-default btn-2">
+      <button class="button-default btn-2" v-on:click="saveAndAdd()">
         <div class="d-icon icon-plus"></div>
         <div class="d-text">Lưu và thêm mới</div>
       </button>
@@ -359,19 +377,23 @@ import AutocompleteInput from './autocomplete-input.vue';
 import InputTag from "./input-tag.vue";
 import CommonFuncion from "../../services/common";
 import InventoryItem from "../../models/inventory-item";
+import {SaveType} from "../../core/enums/save-type";
+import InventoryService from "../../services/inventory-service";
+import {InventoryStore} from "../../store/inventory";
 
 export default Vue.extend({
   
 data: function () {
     return {
-        formType: 1,
+        formType: SaveType.Insert,
         InventoryItem: {
-          InventoryItemCode: ""
+          SKUCode: ""
         } as InventoryItem,
         items: ["đồ ăn", "đồ uống"],
         showSubtable: false,
         InventoryError: {
-          InventoryName: "Trường không được phép để trống"
+          InventoryName: "Trường không được phép để trống",
+          SKUCode: "Mã SKU Đã bị trùng"
         },
         InventoryItemGroups: [
           {
@@ -403,7 +425,8 @@ data: function () {
 
             ]
           }
-        ]
+        ],
+        isValid: true
     }
 },
 props: {
@@ -415,7 +438,90 @@ components: {
   InputTag
 },
 methods: {
-  
+
+  changeStatus(e:any) {
+    this.InventoryItem.Status = e.target.checked;
+  },
+  //Thực hiện lưu
+  //Created By: VM Hùng (15/5/2021)
+  async saveData() {
+    await this.validateData();
+    if (this.isValid) {
+      if (this.formType == SaveType.Insert || this.formType == SaveType.Duplicate) {
+        this.$store.dispatch("InsertInventory", this.InventoryItem);
+        this.$emit("close",1);
+      }
+      if (this.formType == SaveType.Update) {
+        this.$store.dispatch("UpdateInventory", this.InventoryItem);
+        this.$emit("close",1);
+      }
+    }
+  },
+  //Lưu và thêm mới
+  //Created By: VM Hùng (15/5/2021)
+  async saveAndAdd() {
+    await this.validateData();
+    if (this.isValid) {
+      if (this.formType == SaveType.Insert || this.formType == SaveType.Duplicate) {
+        this.$store.dispatch("InsertInventory", this.InventoryItem);
+        this.clearForm();
+      } 
+      if (this.formType == SaveType.Update) {
+        this.$store.dispatch("UpdateInventory", this.InventoryItem);
+        this.formType = SaveType.Insert;
+        this.clearForm();
+
+      }
+    }
+  },
+  //Lưu và nhân bản
+  //Created By: VM Hùng (15/5/2021)
+  async saveAndDuplicate() {
+    await this.validateData();
+    if (this.isValid) {
+      if (this.formType == SaveType.Insert || this.formType == SaveType.Duplicate) {
+        await this.$store.dispatch("InsertInventory", this.InventoryItem);
+        this.generateInvetoryItemCode();
+      }
+      if (this.formType == SaveType.Update) {
+        this.$store.dispatch("UpdateInventory", this.InventoryItem);
+        this.formType = SaveType.Insert;
+        this.generateInvetoryItemCode();
+      }
+    }
+  },
+  //Kiểm tra dữ liệu hợp lệ
+  //Created By: VM Hùng (15/5/2021)
+
+  async validateData() {
+    // valid code
+    if (this.InventoryItem.SKUCode) {
+      var iconError = this.$refs.SKUCodeError as HTMLFormElement;
+      var SKUCode = this.$refs.SKUCode as HTMLFormElement;
+      await InventoryService.GetBySKUCode(this.InventoryItem.SKUCode).then((data) => {
+        if (data.data) {
+          if (this.formType != 3) {
+            iconError.style.display="block";
+            SKUCode.classList.add("border-red");
+            this.isValid = false;
+          } else {
+            if (this.InventoryItem.SKUCode != InventoryStore.state.inventory.SKUCode) {
+              iconError.style.display="block";
+              SKUCode.classList.add("border-red");
+              this.isValid = false;
+            }
+          }
+        } else {
+
+        }
+        
+      })
+      .catch ((e) => {
+        console.log(e.response.data)
+      })
+    }
+    
+  },
   //Chọn ảnh từ máy
   //Created By: VM Hùng (07/5/2021)
   chooseImg() {
@@ -426,13 +532,28 @@ methods: {
       
     }
   },
+  SKUCodeBlur() {
+    if(!this.InventoryItem.SKUCode && this.InventoryItem.InventoryName) {
+      this.generateInvetoryItemCode();
+    }
+  },
   //Tự sinh mã SKU
   //Created By: VM Hùng (08/5/2021)
   generateInvetoryItemCode () {
-      let englishItemName = CommonFuncion.removeVietnameseTones(this.InventoryItem.InventoryItemName);
-      this.InventoryItem.InventoryItemCode = CommonFuncion.getFirstLetter(englishItemName).toUpperCase() + "01";
-      if(!this.InventoryItem.InventoryItemCode) this.InventoryItem.InventoryItemCode = "";
-
+      
+    let englishItemName = CommonFuncion.removeVietnameseTones(this.InventoryItem.InventoryName);
+    let prefix = CommonFuncion.getFirstLetter(englishItemName).toUpperCase();
+    //Lấy mã code lớn nhất hiện tại
+    InventoryService.GetMaxCode(prefix).then((data) => {
+      // tăng mã code lên 1
+      var stringData = String(data.data + 1);
+      if (stringData.length < 2) {
+        stringData = "0" + stringData;
+      }
+      this.InventoryItem.SKUCode = prefix + stringData;
+    })
+    if(!this.InventoryItem.SKUCode) this.InventoryItem.SKUCode = "";
+        
   },
   // focus ô input đầu tiên dialog
   //Created By: VM Hùng (10/5/2021)
@@ -453,25 +574,80 @@ methods: {
   //2: nhân bản 
   //3: sửa
   //Created By: VM Hùng (15/05/2021)
-  showDialog(type: number) {
+  async showDialog(type: number) {
     this.$nextTick(() => this.focusFirstElement());
     this.formType = type;
     switch (type) {
-      case 1:
+      case SaveType.Insert:
         this.InventoryItem.Status = 1;
-        
+        this.clearForm();
+        break;
+      case SaveType.Duplicate:
+        this.InventoryItem.Status = 1;
+        await InventoryStore.dispatch("getByInventoryId");
+        this.clearFormUI();
+        this.setData(InventoryStore.state.inventory);
+        this.generateInvetoryItemCode();
+        break;
+      case SaveType.Update:
+        await InventoryStore.dispatch("getByInventoryId");
+        this.clearFormUI();
+        this.setData(InventoryStore.state.inventory);
+        break;
     }
   },
+  // Xoá tất cả dữ liệu trên from
+  // Created By: VM Hùng (15/05/2021)
+  clearForm() {
+    //xoá hết dữ liệu
+    Object.assign(this.InventoryItem, {
+      InventoryName: "",
+      InventoryGroup: "",
+      SKUCode: "",
+      SalePrice: 0,
+      PurchasePrice: 0,
+      Display: 1,
+      Status: 0,
+      Unit: ""
+    } as InventoryItem);
+    this.clearFormUI();
+  },
+  // tạo lại giao diện
+  //Created By: VM Hùng (15/05/2021)
+  clearFormUI() {
+    
+    let iconExs = document.getElementsByClassName("icon-exclamation");
+    for (let i = 0; i < iconExs.length; ++i) {
+      let iconEx = iconExs[i] as HTMLElement;
+      iconEx.style.display = "none";
+    }
+    let SKUCode = this.$refs.SKUCode as HTMLElement;
+    if (SKUCode) SKUCode.style.borderColor = "#d2d2d2";
+  },
+  //Điền dữ liệu vào form
+  // Created By: VM Hùng (15/05/2021)
+  setData(data:InventoryItem) {
+    Object.assign(this.InventoryItem,data);
+  },
+  // Khi tên hàng hoá không được focus
+  // Created By: VM Hùng (15/05/2021)
   itemNameBlur () {
     let iconError = this.$refs.InventoryNameError as HTMLFormElement;
     let InventoryItemName = this.$refs.InventoryItemName as HTMLFormElement;
-    if (!this.InventoryItem.InventoryItemName) {
+    if (!this.InventoryItem.InventoryName) {
+      //Khi chưa nhập tên hàng hoá
       iconError.style.display="block";
       InventoryItemName.classList.add("border-red");
+      this.isValid = false;
     } else {
-      this.generateInvetoryItemCode();
+      // Đã nhập tên hàng hoá
+      if(!this.InventoryItem.SKUCode && this.InventoryItem.InventoryName) {
+        this.generateInvetoryItemCode();
+      }
+      
       iconError.style.display="none";
       InventoryItemName.classList.remove("border-red");
+      this.isValid = true;
     }
   },
   reverse(s:string){
@@ -496,6 +672,7 @@ created: function () {
         this.showSubtable = false;
       }
   })
+  
 }
 })
 </script>
