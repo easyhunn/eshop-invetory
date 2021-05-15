@@ -4,7 +4,7 @@ export default interface IventoryItem {
   InventoryItemCode?: string;
   PurchasePrice?: number;
   SalePrice?: number;
-  Status?: boolean; 
+  Status?: number; 
   Unit?: string;
   Prefix?: string;
   Color?: string

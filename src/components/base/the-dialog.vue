@@ -22,7 +22,7 @@
       <div class="contain-header">
         THÔNG TIN CƠ BẢN
       </div>
-      <div class="dialog-row">
+      <div class="dialog-row" v-show="formType==3" ref="Status">
         <label for=""> Trạng thái Kinh doanh</label>
         <span class="group-radio">
           <input type="radio" name="status" v-model="InventoryItem.Status"/>
@@ -354,16 +354,17 @@
 </style>
 <script lang="ts">
 import Vue from 'vue'
-import SubTable from "./SubTable.vue";
-import AutocompleteInput from './AutocompleteInput.vue';
-import InputTag from "./InputTag.vue";
+import SubTable from "./sub-table.vue";
+import AutocompleteInput from './autocomplete-input.vue';
+import InputTag from "./input-tag.vue";
 import CommonFuncion from "../../services/common";
-import InventoryItem from "../../models/InventoryItem";
+import InventoryItem from "../../models/inventory-item";
 
 export default Vue.extend({
   
 data: function () {
     return {
+        formType: 1,
         InventoryItem: {
           InventoryItemCode: ""
         } as InventoryItem,
@@ -414,9 +415,9 @@ components: {
   InputTag
 },
 methods: {
+  
   //Chọn ảnh từ máy
   //Created By: VM Hùng (07/5/2021)
-
   chooseImg() {
     try {
       let img = document.getElementById("img");
@@ -448,8 +449,18 @@ methods: {
     }
   },
   //Hiển thị dialog
-  showDialog() {
+  //1: thêm
+  //2: nhân bản 
+  //3: sửa
+  //Created By: VM Hùng (15/05/2021)
+  showDialog(type: number) {
     this.$nextTick(() => this.focusFirstElement());
+    this.formType = type;
+    switch (type) {
+      case 1:
+        this.InventoryItem.Status = 1;
+        
+    }
   },
   itemNameBlur () {
     let iconError = this.$refs.InventoryNameError as HTMLFormElement;
@@ -480,10 +491,10 @@ methods: {
 created: function () {
   this.$root.$on("newColorInput", (e:string) => {
     if (e.length > 0) {
-      this.showSubtable = true;
-    } else {
-      this.showSubtable = false;
-    }
+        this.showSubtable = true;
+      } else {
+        this.showSubtable = false;
+      }
   })
 }
 })

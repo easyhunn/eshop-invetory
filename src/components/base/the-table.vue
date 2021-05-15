@@ -13,19 +13,23 @@
           <div class="filter">
             <a
               class="filter-type-selected"
-              v-on:click="showFilterType.InvetoryItemCode = true"
+              v-on:click="showFilterType.InvetoryCode = true"
             >
-              {{ selectedFilterType.InvetoryItemCode }}
+              {{ selectedFilter.SKUCodeType }}
             </a>
-            <input type="text" class="filter-content" />
+            <input type="text" class="filter-content" 
+              v-model="selectedFilter.SKUCode"
+              @keyup.enter="updateFilterType"
+              @keyup.tab="updateFilterType"
+            />
             <div
               class="mask"
-              v-on:click="showFilterType.InvetoryItemCode = false"
-              v-if="showFilterType.InvetoryItemCode"
+              v-on:click="showFilterType.InvetoryCode = false"
+              v-if="showFilterType.InvetoryCodeType"
             ></div>
           </div>
         </div>
-        <ul class="filter-combo" v-if="showFilterType.InvetoryItemCode">
+        <ul class="filter-combo" v-if="showFilterType.InvetoryCode">
           <li class="filter-type" v-on:click="changeFilterType('*', 1)">
             * : Chứa
           </li>
@@ -54,14 +58,17 @@
           <div class="filter">
             <a
               class="filter-type-selected"
-              v-on:click="showFilterType.IventoryItemName = true"
+              v-on:click="showFilterType.InventoryName = true"
             >
-              {{ selectedFilterType.IventoryItemName }}
+              {{ selectedFilter.InventoryNameType }}
             </a>
-            <input type="text" class="filter-content" />
+            <input type="text" class="filter-content" 
+              v-model="selectedFilter.InventoryName"
+              @keyup.enter="updateFilterType"
+              @keyup.tab="updateFilterType"/>
           </div>
         </div>
-        <ul class="filter-combo" v-if="showFilterType.IventoryItemName">
+        <ul class="filter-combo" v-if="showFilterType.InventoryName">
           <li class="filter-type" v-on:click="changeFilterType('*', 2)">
             * : Chứa
           </li>
@@ -81,8 +88,8 @@
       </div>
       <div
         class="mask"
-        v-on:click="showFilterType.IventoryItemName = false"
-        v-if="showFilterType.IventoryItemName"
+        v-on:click="showFilterType.InventoryName = false"
+        v-if="showFilterType.InventoryName"
       ></div>
       <div class="cell-contain" style="min-width:130px; max-width:130px;">
         <div class="h-cell">
@@ -92,15 +99,18 @@
           <div class="filter">
             <a
               class="filter-type-selected"
-              v-on:click="showFilterType.IventoryItemGroup = true"
+              v-on:click="showFilterType.InventoryGroup = true"
             >
-              {{ selectedFilterType.IventoryItemGroup }}
+              {{ selectedFilter.InventoryGroupType }}
             </a>
 
-            <input type="text" class="filter-content" />
+            <input type="text" class="filter-content" 
+            @keyup.enter="updateFilterType"
+            @keyup.tab="updateFilterType"
+            v-model="selectedFilter.InventoryGroup"/>
           </div>
         </div>
-        <ul class="filter-combo" v-if="showFilterType.IventoryItemGroup">
+        <ul class="filter-combo" v-if="showFilterType.InventoryGroup">
           <li class="filter-type" v-on:click="changeFilterType('*', 3)">
             * : Chứa
           </li>
@@ -120,8 +130,8 @@
       </div>
       <div
         class="mask"
-        v-on:click="showFilterType.IventoryItemGroup = false"
-        v-if="showFilterType.IventoryItemGroup"
+        v-on:click="showFilterType.InventoryGroup = false"
+        v-if="showFilterType.InventoryGroup"
       ></div>
 
       <div class="cell-contain" style="min-width:100px; max-width:100px;">
@@ -134,10 +144,13 @@
               class="filter-type-selected"
               v-on:click="showFilterType.Unit = true"
             >
-              {{ selectedFilterType.Unit }}
+              {{ selectedFilter.UnitType }}
             </a>
 
-            <input type="text" class="filter-content" />
+            <input type="text" class="filter-content" 
+            @keyup.enter="updateFilterType"
+            @keyup.tab="updateFilterType"
+            v-model="selectedFilter.Unit"/>
           </div>
         </div>
         <ul class="filter-combo" v-if="showFilterType.Unit">
@@ -173,10 +186,13 @@
               class="filter-type-selected"
               v-on:click="showFilterType.AveragePrice = true"
             >
-              {{ selectedFilterType.AveragePrice }}
+              {{ selectedFilter.SalePriceType }}
             </a>
 
-            <input type="text" class="filter-content" />
+            <input type="text" class="filter-content" 
+            @keyup.enter="updateFilterType"
+            @keyup.tab="updateFilterType"
+            v-model="selectedFilter.SalePrice"/>
           </div>
         </div>
         <ul
@@ -213,14 +229,15 @@
         </div>
         <div class="filter">
           <select
-            v-model="filterCategories.status"
+            v-model="selectedFilter.Display"
+            @change="updateFilterType"
             name=""
             id=""
             class="filter-content"
           >
-            <option value="3">Tất cả</option>
-            <option value="1">Đang hoạt đông</option>
-            <option value="0">Ngừng hoạt động</option>
+            <option value=-1>Tất cả</option>
+            <option value="1">Có</option>
+            <option value="0">Không</option>
           </select>
         </div>
       </div>
@@ -230,14 +247,15 @@
         </div>
         <div class="filter">
           <select
-            v-model="filterCategories.status"
             name=""
             id=""
             class="filter-content"
           >
             <option value="3">Tất cả</option>
-            <option value="1">Đang hoạt đông</option>
-            <option value="0">Ngừng hoạt động</option>
+            <option value="1">Hàng hoá</option>
+            <option value="0">Combo</option>
+            <option value="2">Dịch vụ</option>
+
           </select>
         </div>
       </div>
@@ -247,14 +265,15 @@
         </div>
         <div class="filter">
           <select
-            v-model="filterCategories.status"
+            v-model="selectedFilter.Status"
+            @change="updateFilterType"
             name=""
             id=""
             class="filter-content"
           >
-            <option value="3">Tất cả</option>
-            <option value="1">Đang hoạt đông</option>
-            <option value="0">Ngừng hoạt động</option>
+            <option value="-1">Tất cả</option>
+            <option value="1">Lô/Hạn sử dụng</option>
+            <option value="0">Khách</option>
           </select>
         </div>
       </div>
@@ -264,12 +283,13 @@
         </div>
         <div class="filter">
           <select
-            v-model="filterCategories.status"
+            v-model="selectedFilter.Status"
+            @change="updateFilterType"
             name=""
             id=""
             class="filter-content"
           >
-            <option value="3">Tất cả</option>
+            <option value="-1">Tất cả</option>
             <option value="1">Đang hoạt đông</option>
             <option value="0">Ngừng hoạt động</option>
           </select>
@@ -279,34 +299,45 @@
     <div class="h-table-body">
       <div ref="noContent" class="no-content">Không có dữ liệu</div>
       <table ref="Table">
-        <tbody ref="tbody">
-          <tr class="h-row" v-on:click="onRowSelect('1', 'bánh đậu xanh')" name="Bánh đậu xanh" id="1">
+        <tbody ref="Tbody">
+          <tr class="h-row" v-for="(inventory, i) in inventories" :key="i" 
+                                    v-on:click="onRowSelect(inventory.InventoryId, 'bánh đậu xanh')" 
+                                    name="Bánh đậu xanh" :id="inventory.InventoryId">
             <td class="flex-center" style="min-width:18px; max-width:18px; margin-left: -1px">
               <input type="checkbox"
-                v-on:change="checkBoxSelected('1', 'bánh đậu xanh', $event.target.checked)"
+                v-on:change="checkBoxSelected(inventory.InventoryId, 'bánh đậu xanh', $event.target.checked)"
+                :value="inventory.InventoryId"
               />
             </td>
-            <td style="min-width:79px; max-width:79px;"></td>
+            <td style="min-width:79px; max-width:79px;">{{inventory.SKUCode}}</td>
             <td
               style="min-width:209px; flex-basis:calc(100vw - 1158px); flex-grow: 0; flex-shrink: 0"
             >
-              Bánh đậu xanh
+              {{inventory.InventoryName}}
             </td>
             <td style="min-width:109px; max-width:109px;">
-              something 1
+              {{inventory.InventoryGroup}}
             </td>
             <td style="min-width:79px; max-width:79px;">
-              something 2
+              {{inventory.Unit}}
             </td>
             <td style="min-width:84px; max-width:84px;">
-              something 3
+              {{inventory.SalePrice}}
             </td>
-            <td style="min-width:154px; max-width:154px;"></td>
-            <td style="min-width:99px; max-width:99px;"></td>
-            <td style="min-width:99px; max-width:99px;"></td>
-            <td style="min-width:112px; max-width:112px;"></td>
+            <td style="min-width:154px; max-width:154px;">
+              {{inventory.Display == 1 ? "có" : "không"}}
+            </td>
+            <td style="min-width:99px; max-width:99px;">
+              Hàng hoá
+            </td>
+            <td style="min-width:99px; max-width:99px;">
+              Khác
+            </td>
+            <td style="min-width:112px; max-width:112px;">
+              {{inventory.Status == 1 ? "Đang hoạt động" : "Ngừng hoạt động"}}
+            </td>
           </tr>
-          <tr class="h-row"  v-on:click="onRowSelect('2', 'bánh đậu đỏ')" name="Bánh đậu xanh" id="2">
+          <!-- <tr class="h-row"  v-on:click="onRowSelect('2', 'bánh đậu đỏ')" name="Bánh đậu xanh" id="2">
             <td class="flex-center" style="min-width:18px; max-width:18px; margin-left: -1px">
               <input type="checkbox" 
                 :checked="false"
@@ -332,7 +363,7 @@
             <td style="min-width:99px; max-width:99px;"></td>
             <td style="min-width:99px; max-width:99px;"></td>
             <td style="min-width:112px; max-width:112px;"></td>
-          </tr>
+          </tr> -->
         </tbody>
       </table>
     </div>
@@ -448,28 +479,14 @@
 }
 </style>
 <script lang="ts">
-import Vue from "vue";
+import Vue, {PropType} from "vue";
+import { mapGetters } from "vuex";
+import {InventoryFilter} from "../../store/inventory-filter";
 
-Vue.directive("click-outside", {
-  bind: function(el: any, binding, vnode: any) {
-    el.clickOutsideEvent = function(event: any) {
-      // here I check that click was outside the el and his children
-      if (!(el == event.target || el.contains(event.target))) {
-        // and if it did, call method provided in attribute value
-        vnode.context[binding.expression](event);
-      }
-    };
-    document.body.addEventListener("click", el.clickOutsideEvent);
-  },
-  unbind: function(el: any) {
-    document.body.removeEventListener("click", el.clickOutsideEvent);
-  },
-});
 export default Vue.extend({
   name: "Table",
   data: () => {
     return {
-      stores: [],
       filterCategories: {
         storeCode: "",
         storeName: "",
@@ -477,17 +494,24 @@ export default Vue.extend({
         phoneNumber: "",
         status: "3",
       },
-      selectedFilterType: {
-        InvetoryItemCode: "*",
-        IventoryItemName: "*",
-        IventoryItemGroup: "*",
-        Unit: "*",
-        AveragePrice: "<",
-      },
+      selectedFilter: {
+        SKUCodeType: "*",
+        SKUCode: "",
+        InventoryNameType: "*",
+        InventoryName: "",
+        InventoryGroupType: "*",
+        InventoryGroup: "",
+        UnitType: "*",
+        Unit: "",
+        SalePriceType: "<",
+        SalePrice: -1,
+        Display: -1,
+        Status: -1
+      } ,
       showFilterType: {
-        InvetoryItemCode: false,
-        IventoryItemName: false,
-        IventoryItemGroup: false,
+        InvetoryCode: false,
+        InventoryName: false,
+        InventoryGroup: false,
         Unit: false,
         AveragePrice: false,
       },
@@ -507,11 +531,14 @@ export default Vue.extend({
       let source = this.$refs.SelectAll as HTMLInputElement;
       var checkboxes = document.querySelectorAll('input[type="checkbox"]') ;
 
-      for (var i = 0; i < checkboxes.length; i++) {
-        let checkbox = checkboxes[i] as HTMLInputElement;
-        checkbox.checked = source.checked;
-        if (this.itemIds[i])
-        this.checkBoxSelected(this.itemIds[i], "", checkbox.checked);
+      try {
+        for (var i = 1; i < checkboxes.length; i++) {
+          let checkbox = checkboxes[i] as HTMLInputElement;
+          checkbox.checked = source.checked;
+          this.checkBoxSelected(checkbox.value, "", checkbox.checked);
+        }
+      } catch (e) {
+        console.log(e);
       }
     },
     //Thay đổi kiểu lọc
@@ -522,26 +549,31 @@ export default Vue.extend({
     changeFilterType(type: string, order: number) {
       switch (order) {
         case 1:
-          this.showFilterType.InvetoryItemCode = false;
-          this.selectedFilterType.InvetoryItemCode = type;
+          this.showFilterType.InvetoryCode = false;
+          this.selectedFilter.SKUCodeType = type;
           break;
         case 2:
-          this.showFilterType.IventoryItemName = false;
-          this.selectedFilterType.IventoryItemName = type;
+          this.showFilterType.InventoryName = false;
+          this.selectedFilter.InventoryNameType = type;
           break;
         case 3:
-          this.showFilterType.IventoryItemGroup = false;
-          this.selectedFilterType.IventoryItemGroup = type;
+          this.showFilterType.InventoryGroup = false;
+          this.selectedFilter.InventoryGroupType = type;
           break;
         case 4:
           this.showFilterType.Unit = false;
-          this.selectedFilterType.Unit = type;
+          this.selectedFilter.UnitType = type;
           break;
         case 5:
           this.showFilterType.AveragePrice = false;
-          this.selectedFilterType.AveragePrice = type;
+          this.selectedFilter.SalePriceType = type;
           break;
       }
+      this.updateFilterType();
+    },
+    updateFilterType() {
+      InventoryFilter.commit("setFilterProperties", this.selectedFilter);
+      this.$store.dispatch("getByPaging");
     },
     //Khi hàng được chọn
     onRowSelect (id:string, name:string) {
@@ -557,12 +589,12 @@ export default Vue.extend({
         }
       }
       //chọn hàng
-      this.rowSelected(id, name);
+      this.rowSelect(id, name);
       
     },
      //Sự kiện khi hàng đã được chọn
     // Created By: VM Hùng (14/04/2021)
-    rowSelected (id:string, name:string) {
+    rowSelect (id:string, name:string) {
       //selected hàng mới
       this.selectedRow = id;
       this.ItemNameSelected = name; 
@@ -576,29 +608,49 @@ export default Vue.extend({
     checkBoxSelected (id:string, name:string, source:any) {
       var rowSelect = document.getElementById(id);
       // Nếu ô check box trạng thái chọn
-      if (source) {
-        this.listIdSelected.push(id);
-        if (rowSelect) rowSelect.style.backgroundColor = "#E2E4F1";
-      } else {
-        let index = this.listIdSelected.indexOf(id);
-        if (index > -1) {
-          this.listIdSelected.splice(index, 1);
+      //đổi màu => thêm vào danh sahcs những id được chọn
+      try {
+        if (source) {
+          //Thêm id vào danh sách các hàng hoá được chọn
+          this.listIdSelected.push(id);
+          if (rowSelect) rowSelect.style.backgroundColor = "#E2E4F1";
+        } else {
+          // xoá hàng hoá khỏi list id được chon
+          let index = this.listIdSelected.indexOf(id);
+          if (index > -1) {
+            this.listIdSelected.splice(index, 1);
+          }
+          var rowSelecte = document.getElementById(id) as HTMLTableRowElement;
+          if (rowSelecte.rowIndex % 2 == 0)
+            rowSelecte.style.backgroundColor = "#fff";
+          else 
+            rowSelecte.style.backgroundColor = "#f6f6f6";
         }
-        var rowSelecte = document.getElementById(id) as HTMLTableRowElement;
-        if (rowSelecte.rowIndex % 2 == 0)
-          rowSelecte.style.backgroundColor = "#fff";
-        else 
-          rowSelecte.style.backgroundColor = "#f6f6f6";
+      } catch(e) {
+        console.log(e);
       }
+    },
+    //Tải dữ liệu
+    //Created By: MV Hùng(15/5/2021)
+    async loadData() {
+      await this.$store.dispatch("getByPaging");
     }
   },
   updated: function () {
     this.selectedRow = "";
-    let table = this.$refs.Table as HTMLTableElement;
-    let firstRow = table.children[0] as HTMLElement;
+    let tbody = this.$refs.Tbody as HTMLTableElement;
+    let firstRow = tbody.children[0] as HTMLElement;
     if (firstRow) {
       firstRow.click();
     }
+  },
+  created: function () {
+      this.loadData();
+  },
+  computed: {
+    ...mapGetters({
+      inventories: "inventories",
+    }),
   }
 });
 </script>

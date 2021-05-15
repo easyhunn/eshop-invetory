@@ -1,22 +1,22 @@
 <template>
   <div id="content">
     <div class="content-header">
-      <button class="item" v-on:click="displayDialog()">
+      <button class="item" v-on:click="displayDialog(1)">
         <div class="d-icon icon-plus-white"></div>
         <div class="item-content">Thêm mới</div>
         <div class="icon-arrow-down-white sm-icon"></div>
       </button>
-      <button ref="duplicateStore" class="item ">
+      <button ref="duplicateStore" v-on:click="displayDialog(2)" class="item ">
         <div class="d-icon icon-duplicate"></div>
         <div class="item-content">Nhân bản</div>
       </button>
-      <button ref="updateStore" class="item">
+      <button ref="updateStore" class="item" v-on:click="displayDialog(3)">
         <div class="d-icon icon-edit"></div>
         <div class="item-content">Sửa</div>
       </button>
       <button ref="deleteStore" class="item">
         <div class="d-icon icon-delete"></div>
-        <div class="item-content">Xoá</div>
+        <div class="item-content" v-on:click="displayDeleteAlert">Xoá</div>
       </button>
       <button class="item">
         <div class="d-icon icon-reload-white"></div>
@@ -24,20 +24,20 @@
       </button>
     </div>
     <div class="table">
-      <Table />
+      <Table/>
     </div>
     <div class="footer">
       <div class="pagging">
         <div class="pagging-left">
-          <button ref="firstPage" class="d-icon icon-double-prepage"></button>
-          <button ref="prevPage" class="d-icon icon-prepage "></button>
+          <button ref="firstPage" v-on:click="firstPage" class="d-icon icon-double-prepage"></button>
+          <button ref="prevPage" v-on:click="prevPage" class="d-icon icon-prepage "></button>
           <div style="padding: 0 4px">Trang</div>
-          <input type="text" />
-          <div style="padding: 0 10px 0 4px">Trên 5</div>
-          <button class="d-icon icon-nextpage"></button>
-          <button class="d-icon icon-double-nextpage"></button>
+          <input type="number" v-model="pageIndex" v-on:keyup.enter="changePageIndex"/>
+          <div style="padding: 0 10px 0 4px">Trên {{totalPage}}</div>
+          <button v-on:click="nextPage" ref="nextPage" class="d-icon icon-nextpage"></button>
+          <button v-on:click="lastPage" ref="lastPage" class="d-icon icon-double-nextpage"></button>
           <button class="d-icon icon-reload"></button>
-          <select  name="" id="">
+          <select v-model="pageSize" name="" id="" @change="changePageSize">
             <option value="15">15</option>
             <option value="25">25</option>
             <option value="50">50</option>
@@ -45,28 +45,28 @@
           </select>
         </div>
         <dir class="pagging-right">
-          Hiển thị 1
-          Trên 50 kết quả
+          Hiển thị {{(pageIndex-1)*pageSize + 1}}
+          -{{((pageIndex)*pageSize < totalRecord) ? (pageIndex)*pageSize : totalRecord}} 
+          Trên {{totalRecord}} kết quả
         </dir>
       </div>
     </div>
-    <Dialog  ref="Dialog" v-show="showDialog" :hideDialog="hideDialog"/>
+    <Dialog ref="Dialog" v-show="showDialog" :hideDialog="hideDialog" />
 
     <!-- region alert delete -->
-    <div class="alert-delete" v-if="false">
+    <div class="alert-delete" v-if="showDeleteAlert">
       <div class="alert-background"></div>
       <div class="alert-container">
         <div class="alert-header">
           <div class="alert-title">
             Xóa dữ liệu
           </div>
-          <button class="d-icon icon-x"></button>
+          <button class="d-icon icon-x" v-on:click="hideDeleteAlert"></button>
         </div>
         <div class="alert-content">
           <div class="d-icon m-icon-help m-icon"></div>
           <div class="alert-message">
-            Bạn có chắc chắn muốn xóa <b></b> khỏi danh
-            sách cửa hàng.
+            Bạn có chắc chắn muốn xóa <b></b> khỏi danh sách cửa hàng.
           </div>
         </div>
         <div class="alert-footer">
@@ -77,7 +77,7 @@
             </button>
             <button class="button-default btn-3">
               <div class="d-icon icon-x"></div>
-              <div class="d-text">Hủy bỏ</div>
+              <div class="d-text" v-on:click="hideDeleteAlert">Hủy bỏ</div>
             </button>
           </div>
         </div>
@@ -86,7 +86,7 @@
     <!-- end region alert delete -->
 
     <!-- region preload screen -->
-    <div class="preload" v-show="false">
+    <div class="preload" v-show="loading">
       <div class="preload-background"></div>
       <div class="preload-container">
         <div class="loader"></div>
@@ -94,11 +94,9 @@
     </div>
     <!-- end region pre load screen -->
     <!-- Thông báo thành công -->
-    <Alert v-if="false"  />
+    <Alert v-if="false" />
     <!-- thông báo lỗi mặc định -->
-    <AlertErrorDefault
-      v-if="false"
-    />
+    <AlertErrorDefault v-if="false" />
   </div>
 </template>
 <style lang="scss">
@@ -161,6 +159,7 @@
   border-left: 1px solid #190472;
   background-color: transparent;
   color: #fff;
+  cursor: pointer;
 }
 .content-header .item:hover {
   background-color: #0088c1;
@@ -350,13 +349,17 @@
   }
 }
 </style>
+<script lang="ts">
+import Vue from 'vue'
 
-<script>
-import Table from "../base/Table.vue";
-import Dialog from "../base/Dialog.vue";
-import Alert from "../base/Alert.vue";
-import AlertErrorDefault from "../base/AlertErrorDefault.vue";
-export default {
+import Table from "../base/the-table.vue";
+import Dialog from "../base/the-dialog.vue";
+import Alert from "../base/the-alert.vue";
+import AlertErrorDefault from "../base/alert-error-default.vue";
+import {InventoryFilter} from "../../store/inventory-filter";
+import { mapGetters, mapState } from 'vuex';
+
+export default Vue.extend({
   name: "Content",
   components: {
     Table,
@@ -367,18 +370,140 @@ export default {
   },
   data: function() {
     return {
-      showDialog: false
+      showDialog: false,
+      showDeleteAlert: false,
+      pageSize: 15,
+      pageIndex: 1,
+      totalPage: 0
     };
   },
   methods: {
-    displayDialog() {
-      this.showDialog = true;
-      this.$refs.Dialog.showDialog();
+    //Chuyển sang trang tiếp theo
+    nextPage () {
+      if (this.pageIndex < this.totalPage){
+        this.pageIndex++;
+        this.changePageIndex();
+      }
       
     },
+    //Chuyển về trang trước
+    prevPage () {
+      if (this.pageIndex > 1) {
+        this.pageIndex--;
+        this.changePageIndex();
+      }
+    },
+    lastPage () {
+      if (this.pageIndex != this.totalPage) {
+        this.pageIndex = this.totalPage;
+        this.changePageIndex();
+      }
+
+    },
+    firstPage () {
+      if (this.pageIndex != 1) {
+        this.pageIndex = 1;
+        this.changePageIndex();
+      }
+    },
+    //Thay đổi kích thước trang
+    async changePageSize() {
+      this.pageIndex = 1;
+      InventoryFilter.commit("setPageIndex", this.pageIndex);
+      InventoryFilter.commit("setPageSize", this.pageSize);
+      // load data
+      await this.$store.dispatch("getByPaging");
+      
+    },
+    validatePageIndex() {
+      // Chuẩn hoá thứ tự trang
+      if (this.pageIndex > this.totalPage)this.pageIndex = this.totalPage
+      if (this.pageIndex < 1) this.pageIndex = 1
+    },
+    async changePageIndex() {
+      // Chuẩn hoá thứ tự trang
+      this.validatePageIndex();
+      // Thay đổi giá trị thứ tự trang global
+      InventoryFilter.commit("setPageIndex", this.pageIndex);
+      // load data
+      await this.$store.dispatch("getByPaging");
+      let prevPage = this.$refs.prevPage as HTMLElement;
+      let lastPage = this.$refs.lastPage as HTMLElement;
+      let nextPage = this.$refs.nextPage as HTMLElement;
+      let firstPage = this.$refs.firstPage as HTMLElement;
+
+      if (this.pageIndex <= 1) {
+        prevPage.classList.add("disable");
+        firstPage.classList.add("disable");
+      } else {
+        prevPage.classList.remove("disable");
+        firstPage.classList.remove("disable");
+      }
+      if (this.pageIndex >= this.totalPage) {
+        lastPage.classList.add("disable")
+        nextPage.classList.add("disable");
+      } else {
+        
+        lastPage.classList.remove("disable")
+        nextPage.classList.remove("disable");
+      }
+    },
+    // Hiện dialog
+    //type: 
+    // 1: thêm
+    // 3: sửa
+    // 2: nhân bản
+    displayDialog(type:number) {
+      this.showDialog = true;
+      let dialog = this.$refs.Dialog as any;
+      dialog.showDialog(type);
+    },
+    InsertInventory() {
+      this.showDialog = true;
+      let dialog = this.$refs.Dialog as any;
+      dialog.showDialog(1);
+    },
+    //Ẩn dialog thêm/sửa
     hideDialog() {
       this.showDialog = false;
-    }
+    },
+    //Hiện dialog xoá
+    displayDeleteAlert() {
+      this.showDeleteAlert = true;
+    },
+    //Ẩn dialog xoá
+    hideDeleteAlert() {
+      this.showDeleteAlert = false;
+    },
+    
+  },
+  computed: {
+    ...mapGetters({
+      totalRecord: "totalRecord",
+      loading: "loading"
+    }),
+  },
+  
+  watch: {
+    totalRecord() {
+      let extend = this.totalRecord%this.pageSize;
+      let total:any = this.totalRecord / this.pageSize;
+      if (extend == 0) {
+        this.totalPage = parseInt(total)
+      } else {
+        this.totalPage = parseInt(total) + 1;
+      }
+    },
+    
+  },
+  updated: function () {
+    console.log(this.loading)
+  },
+  mounted: function () {
+    let prevPage = this.$refs.prevPage as HTMLElement;
+    prevPage.classList.add("disable");
+    let firstPage = this.$refs.firstPage as HTMLElement;
+    firstPage.classList.add("disable");
   }
-};
+})
 </script>
