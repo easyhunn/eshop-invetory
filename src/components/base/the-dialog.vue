@@ -86,14 +86,18 @@
         <label for="">
           Giá mua <span class="d-icon icon-question"></span>
         </label>
-        <input type="text" v-model="InventoryItem.PurchasePrice" @keydown="inputPurchase"/>
+        <CurrencyInput @onKeyup="purchasePriceChange" 
+          :defaultValue="InventoryItem.PurchasePrice"/>
+        
       </div>
       <div class="dialog-row">
         <label for="">
           Giá bán
         </label>
-        <input type="text" v-model="InventoryItem.SalePrice"/>
+        <CurrencyInput @onKeyup="salePriceChange"
+          :defaultValue="InventoryItem.SalePrice"/>
       </div>
+      
       <div class="dialog-row">
         <label for="">
           Đơn vị tính 
@@ -120,8 +124,6 @@
         </label>
         <InputTag :value="colors"/>
         <!-- <div class="input-group">
-          
-          
           <input style="min-width: 283px;" type="text" class="right-input-side" />
         </div> -->
       </div>
@@ -333,17 +335,17 @@
         }
       }
       input[type="text"] {
-        height: 22px;
-        border-radius: 3px;
-        border: 1px solid #d2d2d2;
-        padding: 5px 10px;
-        font-size: 13px;
+        height: 22px ;
+        border-radius: 3px ;
+        border: 1px solid #d2d2d2 ;
+        padding: 5px 10px ;
+        font-size: 13px ;
         
-        width: 216px;
+        width: 216px ;
         min-width: 194px;
       }
       input {
-        outline: none !important;
+        outline: none ;
       }
       input:focus {
         border-color: #636dde;
@@ -382,6 +384,7 @@ import {SaveType} from "../../core/enums/save-type";
 import InventoryService from "../../services/inventory-service";
 import {InventoryStore} from "../../store/inventory";
 import { mapGetters } from "vuex";
+import CurrencyInput from "./currency-input.vue";
 
 export default Vue.extend({
   
@@ -437,10 +440,16 @@ props: {
 components: {
   SubTable,
   AutocompleteInput,
-  InputTag
+  InputTag,
+  CurrencyInput
 },
 methods: {
-
+  salePriceChange(value:any) {
+    this.InventoryItem.SalePrice = value;
+  },
+  purchasePriceChange(value:any) {
+    this.InventoryItem.PurchasePrice = value;
+  },
   changeStatus(e:any) {
     this.InventoryItem.Status = e.target.checked;
   },

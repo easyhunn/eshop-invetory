@@ -11,7 +11,8 @@
       <div class="alert-content">
         <div class="d-icon icon-popup-x m-icon"></div>
         <div class="alert-message">
-          {{errorMessage}}
+          Không xóa được hàng hóa do hàng hóa đã có phát sinh. 
+          Xem các tình huống phát sinh và cách xử lý <a href="#">tại đây</a>
         </div>
       </div>
       <div class="alert-footer">
@@ -26,9 +27,7 @@
 </template>
 
 <style scoped>
-.m-icon {
-    background-size: contain;
-}
+
 .alert-error {
   position: absolute;
 }
@@ -103,10 +102,9 @@
 </style>
 <script>
 export default {
-  name: "AlertErrorDefault",
+  name: "AlertDeleteError",
   props: {
     closeAlert: Function,
-    errorMessage: String,
   },
 }
 </script>

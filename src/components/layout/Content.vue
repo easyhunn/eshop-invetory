@@ -6,19 +6,27 @@
         <div class="item-content">Thêm mới</div>
         <div class="icon-arrow-down-white sm-icon"></div>
       </button>
-      <button ref="duplicateStore" v-on:click="displayDialog(2)" class="item ">
+      <button ref="duplicateInventory" 
+        v-on:click="displayDialog(2)" 
+        class="item"
+        :disabled="disableDuplicate"
+      >
         <div class="d-icon icon-duplicate"></div>
         <div class="item-content">Nhân bản</div>
       </button>
-      <button ref="updateStore" class="item" v-on:click="displayDialog(3)">
+      <button ref="updateInventory" 
+        class="item" 
+        v-on:click="displayDialog(3)"
+        :disabled="disableUpdate"
+        >
         <div class="d-icon icon-edit"></div>
         <div class="item-content">Sửa</div>
       </button>
-      <button ref="deleteStore" class="item">
+      <button ref="deleteStore" v-on:click="displayDeleteAlert" class="item">
         <div class="d-icon icon-delete"></div>
-        <div class="item-content" v-on:click="displayDeleteAlert">Xoá</div>
+        <div class="item-content" >Xoá</div>
       </button>
-      <button class="item">
+      <button class="item" v-on:click="reloadData">
         <div class="d-icon icon-reload-white"></div>
         <div class="item-content">Nạp</div>
       </button>
@@ -56,7 +64,7 @@
             ref="lastPage"
             class="d-icon icon-double-nextpage"
           ></button>
-          <button class="d-icon icon-reload"></button>
+          <button class="d-icon icon-reload" v-on:click="reloadAllData"></button>
           <select v-model="pageSize" name="" id="" @change="changePageSize">
             <option value="15">15</option>
             <option value="25">25</option>
@@ -125,6 +133,7 @@
     <Alert v-if="false" />
     <!-- thông báo lỗi mặc định -->
     <AlertErrorDefault v-if="false" />
+    <AlertDeleteError :closeAlert="hideAlertDeleteError" v-if="showAlertDeleteError"/>
   </div>
 </template>
 <style lang="scss">
@@ -387,15 +396,17 @@ import AlertErrorDefault from "../base/alert-error-default.vue";
 import { InventoryFilter } from "../../store/inventory-filter";
 import {InventoryStore} from "../../store/inventory";
 import { mapGetters } from "vuex";
+import AlertDeleteError from "../base/alert-delete-error.vue";
+import {SaveType} from "../../core/enums/save-type";
 
 export default Vue.extend({
   name: "Content",
   components: {
     Table,
-
     Dialog,
     Alert,
     AlertErrorDefault,
+    AlertDeleteError
   },
   data: function() {
     return {
@@ -404,10 +415,36 @@ export default Vue.extend({
       pageSize: 15,
       pageIndex: 1,
       totalPage: 0,
-      selectedInventory: ""
+      selectedInventory: "",
+      disableDuplicate: false,
+      disableUpdate: false,
+      showAlertDeleteError: false
     };
   },
   methods: {
+    // Tải lại dữ liệu toàn bộ trang
+    //Created By: VM Hùng(16/05/2021)
+    reloadAllData() {
+      this.pageSize = 15;
+      this.pageIndex = 1;
+      this.changePageIndex();
+      this.reloadData;
+    },
+    //tải lại dữ liệu trang hiện tại
+    //Created By: VM Hùng(16/05/2021)
+    reloadData() {
+      this.$store.dispatch("getByPaging")
+    },
+    // Hiển thị thông báo xoá lỗi
+    //Created By: VM Hùng(16/05/2021)
+    hideAlertDeleteError () {
+      this.showAlertDeleteError = false;
+    },
+    // ẩn thông báo xoá lỗi
+    //Created By: VM Hùng(16/05/2021)
+    displayAlertDeleteError () {
+      this.showAlertDeleteError = true;
+    },
     // Xoá hàng hoá được chọn
     //Created By: VM Hùng(15/05/2021)
     deleteInventory() {
@@ -451,8 +488,7 @@ export default Vue.extend({
     //Thay đổi kích thước trang
     async changePageSize() {
       this.pageIndex = 1;
-      InventoryFilter.commit("setPageIndex", this.pageIndex);
-      InventoryFilter.commit("setPageSize", this.pageSize);
+      
       // load data
       await this.$store.dispatch("getByPaging");
     },
@@ -494,6 +530,7 @@ export default Vue.extend({
     // 3: sửa
     // 2: nhân bản
     displayDialog(type: number) {
+      this.$store.commit("setFormType", type)
       this.showDialog = true;
       let dialog = this.$refs.Dialog as any;
       if (type != 1) this.$store.dispatch("getInventoriesDetail");
@@ -508,11 +545,17 @@ export default Vue.extend({
     },
     //Ẩn dialog thêm/sửa
     hideDialog() {
+      this.$store.commit("setFormType", 0)
       this.showDialog = false;
     },
     //Hiện dialog xoá
     displayDeleteAlert() {
-      this.selectedInventory = InventoryStore.state.inventoryName;
+      if (this.selectedIdsSize > 1) {
+        this.selectedInventory = "các bản ghi đã chọn";
+      } else {
+        this.selectedInventory = InventoryStore.state.inventoryName;
+      }
+      
       this.showDeleteAlert = true;
     },
     //Ẩn dialog xoá
@@ -524,6 +567,8 @@ export default Vue.extend({
     ...mapGetters({
       totalRecord: "totalRecord",
       loading: "loading",
+      selectedIdsSize: "listIdsSize",
+      error: "error"
     }),
   },
 
@@ -536,8 +581,36 @@ export default Vue.extend({
       } else {
         this.totalPage = parseInt(total) + 1;
       }
+      // chặn nhân bản sửa khi không có bản ghi
+      if (this.totalRecord < 1) {
+       this.disableDuplicate = true;
+       this.disableUpdate = true; 
+      } else {
+        this.disableDuplicate = false;
+        this.disableUpdate = false; 
+      }
     },
-    
+    error() {
+      // lỗi xoá thất bại
+      this.displayAlertDeleteError();
+    },
+
+    selectedIdsSize() {
+      var duplicate = this.$refs.duplicateInventory as HTMLElement;
+      var update = this.$refs.updateInventory as HTMLElement;
+
+      if (this.selectedIdsSize > 1) {
+        this.disableDuplicate = true;
+        this.disableUpdate = true; 
+        duplicate.classList.add("disable")
+        update.classList.add("disable")
+      } else {
+        this.disableDuplicate = false;
+        this.disableUpdate = false; 
+        duplicate.classList.remove("disable")
+        update.classList.remove("disable")
+      }
+    }
   },
   mounted: function() {
     let prevPage = this.$refs.prevPage as HTMLElement;

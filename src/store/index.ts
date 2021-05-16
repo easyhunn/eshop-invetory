@@ -13,26 +13,31 @@ const getDefaultState = () => {
     inventoriesDetail: Array<InventoryItem>(),// danh sách hàng hoá con
     selectedInventoriesDetailId: Array<string>(),// danh sách hàng hoá chi tiết chọn để xoá 
     colors: Array<string>(),
-    selectedIds: [""],
+    selectedIds: [""], // Danh sách id được chọn
     totalRecord: 0,
     loading: false,
     success: true,
     errorMsg: "",
+    formType: 0
   };
 };
 export default new Vuex.Store({
   state: {
     inventories: Array<InventoryItem>(),
     inventoriesDetail: Array<InventoryItem>(), // danh sách hàng hoá con
-    selectedInventoriesDetailId: Array<string>(),// danh sách hàng hoá chi tiết chọn để xoá 
+    selectedInventoriesDetailId: Array<string>(), // danh sách hàng hoá chi tiết chọn để xoá
     colors: Array<string>(),
     selectedIds: [""],
     totalRecord: 0,
     loading: false,
     success: true,
     errorMsg: "",
+    formType: 0,
   },
   mutations: {
+    setFormType(state, type:number) {
+      state.formType = type;
+    },
     // Thêm thông tin hàng hoá
     // Created By: VM Hùng(14/05/2021)
     insertInventory(state, inventory) {
@@ -154,8 +159,7 @@ export default new Vuex.Store({
       console.log(this.state.selectedInventoriesDetailId);
       if (this.state.selectedInventoriesDetailId.length > 0) {
         for (let inventoryId of this.state.selectedInventoriesDetailId) {
-          if (inventoryId)
-            await InventoryService.DeleteInventory(inventoryId);
+          if (inventoryId) await InventoryService.DeleteInventory(inventoryId);
         }
       }
       // Thêm thông tin chi tiết bản ghi
@@ -237,10 +241,10 @@ export default new Vuex.Store({
       // );
       for (var i = this.state.inventoriesDetail.length - 1; i >= 0; --i) {
         let inventory = this.state.inventoriesDetail[i];
-        if (!color.includes(inventory.Color ||"")) {
+        if (!color.includes(inventory.Color || "")) {
           // Xoá danh sách màu, hàng hoá không còn tồn tại
           this.state.inventoriesDetail.splice(i, 1);
-          this.state.colors.splice(i, 1); 
+          this.state.colors.splice(i, 1);
           // Kiểm tra id không rỗng -> thêm vào danh sách cần xoá
           if (inventory.InventoryId != "00000000-0000-0000-0000-000000000000")
             this.state.selectedInventoriesDetailId.push(
@@ -249,7 +253,7 @@ export default new Vuex.Store({
         }
       }
     },
-    // Cập nhật tên chi tiết hàng hoá 
+    // Cập nhật tên chi tiết hàng hoá
     UpdateInventoriesDetailName(context, name: string) {
       this.state.inventoriesDetail.forEach((inventory: InventoryItem) => {
         inventory.InventoryName = name;

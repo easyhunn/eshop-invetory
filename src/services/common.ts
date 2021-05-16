@@ -1,4 +1,5 @@
 // xoá kí tự tiếng việt
+// Created By: VM Hùng (12/05/2021)
 export function removeVietnameseTones(str: string) {
   str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
   str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
@@ -30,6 +31,8 @@ export function removeVietnameseTones(str: string) {
 }
 
 // lấy các chữ cái tự đầu tiên
+// Created By: VM Hùng (12/05/2021)
+
 function getFirstLetter (str:string) {
     var matches = str.match(/\b(\w)/g); 
     var acronym = "";

@@ -188,11 +188,15 @@
             >
               {{ selectedFilter.SalePriceType }}
             </a>
-
-            <input type="text" class="filter-content" 
+            <CurrencyInput type="text" class="filter-content"
+              @onKeyup="setFilterPrice"
+              @onKeyupEnter="updateFilterType"
+              @onKeyupTab="updateFilterType"
+            />
+            <!-- <input type="text" class="filter-content" 
             @keyup.enter="updateFilterType"
             @keyup.tab="updateFilterType"
-            v-model="selectedFilter.SalePrice"/>
+            v-model="selectedFilter.SalePrice"/> -->
           </div>
         </div>
         <ul
@@ -483,6 +487,7 @@ import Vue from "vue";
 import { mapGetters } from "vuex";
 import {InventoryFilter} from "../../store/inventory-filter";
 import {InventoryStore} from "../../store/inventory";
+import CurrencyInput from "./currency-input.vue";
 
 export default Vue.extend({
   name: "Table",
@@ -526,7 +531,16 @@ export default Vue.extend({
       listIdSelected: [""],
     };
   },
+  components: {
+    CurrencyInput
+  },
   methods: {
+    setFilterPrice(value:any) {
+      if (!value) this.selectedFilter.SalePrice = -1;
+      this.selectedFilter.SalePrice = value;
+    },
+    //chọn tất cả hàng hoá hiển thị
+    // Created By: VM Hùng (16/05/2021)
     selectAllItem() {
       let source = this.$refs.SelectAll as HTMLInputElement;
       var checkboxes = document.querySelectorAll('input[type="checkbox"]') ;

@@ -3,7 +3,7 @@
     <!--hộp thoại lựa chọn cửa hàng-->
     <div class="header-left">
       <div class="header-left-content">
-        Hàng hoá
+        Hàng hoá{{type}}
       </div>
     </div>
     <!--avatar, thông báo-->
@@ -103,3 +103,31 @@
   background-color: white;
 }
 </style>
+<script lang="ts">
+import Vue from 'vue'
+import {SaveType} from "../../core/enums/save-type";
+export default Vue.extend({
+  data: function() {
+    return {
+      type: ""
+    }
+  },
+  watch: {
+    "$store.state.formType"() {  
+      switch (this.$store.state.formType) {
+        
+        case SaveType.Insert: 
+        case SaveType.Duplicate: 
+              this.type = "/Thêm mới"
+              break;
+        case SaveType.Update:
+          this.type = "/Sửa"
+          break;
+        default:
+          this.type = ""
+      }
+    }
+  },
+  
+})
+</script>
