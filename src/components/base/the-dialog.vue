@@ -118,18 +118,19 @@
         <label for="">
           Thuộc tính
         </label>
-        <InputTag />
+        <InputTag :value="colors"/>
         <!-- <div class="input-group">
           
           
           <input style="min-width: 283px;" type="text" class="right-input-side" />
         </div> -->
       </div>
-      <div class="dialog-row" v-show="showSubtable" style="max-height: 250px;">
+      <div class="dialog-row" v-show="colors.length > 0" style="max-height: 250px;">
         <label for="">
           Chi tiết thuộc tính
         </label>
-         <SubTable :InventoryItem="InventoryItem" />
+         <SubTable :ParentInventoryItem="InventoryItem" 
+         :formType="formType"/>
       </div>
       <div class="contain-header">
         THÔNG BỔ SUNG
@@ -380,6 +381,7 @@ import InventoryItem from "../../models/inventory-item";
 import {SaveType} from "../../core/enums/save-type";
 import InventoryService from "../../services/inventory-service";
 import {InventoryStore} from "../../store/inventory";
+import { mapGetters } from "vuex";
 
 export default Vue.extend({
   
@@ -664,15 +666,10 @@ methods: {
     
   }
 },
-created: function () {
-  this.$root.$on("newColorInput", (e:string) => {
-    if (e.length > 0) {
-        this.showSubtable = true;
-      } else {
-        this.showSubtable = false;
-      }
-  })
-  
-}
+computed: {
+   ...mapGetters({
+      colors: "inventoriesDetailColor",
+    }),
+},
 })
 </script>

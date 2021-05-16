@@ -40,13 +40,17 @@ class InventoryService {
         InventoryFilter.state.inventorieFilter.SalePriceType
     );
   }
-  //THêm mới 1 hàng hoá
+  //Thêm mới 1 hàng hoá
   //Created By: VM Hùng (15/05/2021)
   InsertInventory(inventory: InventoryItem) {
-
     return axios.post(ADDRESS.INSERT, inventory);
   }
-  DeleteInventory(inventoryId:string) {
+  //Thêm mới 1 chi tiết hàng hoá
+  //Created By: VM Hùng (15/05/2021)
+  InsertInventoryDetail(inventory: InventoryItem) {
+    return axios.post(ADDRESS.INSERT_INVENTORY_DETAIL, inventory);
+  }
+  DeleteInventory(inventoryId: string) {
     return axios.delete(ADDRESS.DELETE + inventoryId);
   }
   //Lấy mã code lớn nhất
@@ -69,8 +73,17 @@ class InventoryService {
   UpdateInventory(inventoryId: string, inventory: InventoryItem) {
     return axios.put(ADDRESS.GET_BY_ID + inventoryId, inventory);
   }
-  DeleteInventories(inventories:string) {
-    return axios.delete(ADDRESS.DELETE_MULTIPLE, {params: {'listId': inventories}});
+  //Xoá bởi chuỗi id
+  //Created By: VM Hùng (15/05/2021)
+  DeleteInventories(inventories: string) {
+    return axios.delete(ADDRESS.DELETE_MULTIPLE, {
+      params: { listId: inventories },
+    });
+  }
+  //Lấy thông hàng hoá theo prarentId
+  //Created By: VM Hùng (16/05/2021)
+  GetInventoriesByParentId(parentId: string) {
+    return axios.get(ADDRESS.GET_BY_PARENT_ID + parentId);
   }
 }
 

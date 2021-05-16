@@ -14,7 +14,7 @@
     </div>
     <div class="t-body">
       <table>
-        <tr v-for="(Inventory, i) in InventoryItems" :key="i">
+        <tr v-for="(Inventory, i) in inventoriesDetail" :key="i">
           <td
             class="edit-able"
             style="min-width:363px; flex-basis:calc(100% - 605px); flex-grow: 0; flex-shrink: 0"
@@ -108,6 +108,7 @@
 
 <script lang="ts">
 import Vue from "vue";
+import { mapGetters } from "vuex";
 import Table from "./the-table.vue";
 import InventoryItem from "../../models/inventory-item";
 import CommonFuncion from "../../services/common";
@@ -118,48 +119,77 @@ export default Vue.extend({
     };
   },
   props: {
-    InventoryItem: { type: Object as () => InventoryItem },
+    ParentInventoryItem: { type: Object as () => InventoryItem },
+    formType: {type: Number}
   },
   components: { Table },
-  watch: {
-    "InventoryItem.InventoryName"() {
-      this.InventoryItems.forEach((e) => {
-        e.InventoryName =
-          this.InventoryItem.InventoryName + " (" + e.Color + ")";
-      });
-    },
-    "InventoryItem.InventoryItemCode"() {
-      this.InventoryItems.forEach((e) => {
-        e.SKUCode =
-          this.InventoryItem.SKUCode + "-" + e.Prefix;
-      });
-    },
-  },
-  created: function() {
-    //Khi thông tin thuộc tính màu sắc nhập vào thay đổi
-    //Created By: VM Hùng (04/09/2021)
-    this.$root.$on("newColorInput", (e: Array<string>) => {
-      this.InventoryItems = [];
-      // create list sub invetory item with properti
-      e.forEach((color, i) => {
-        let colorEnglish = CommonFuncion.removeVietnameseTones(color);
+  methods: {
+    createInventoryByColor(color:string) {
+      let colorEnglish = CommonFuncion.removeVietnameseTones(color);
         let prefix = CommonFuncion.getFirstLetter(colorEnglish).toUpperCase();
         if (prefix.length < 2) {
           prefix += CommonFuncion.getFirstLetter(
             colorEnglish.substring(1)
           ).toUpperCase();
         }
+        // Tạo mới 1 thông tin hàng hoá
         let InventoryItemWithProperty: InventoryItem = {
           InventoryName: "",
         };
-        Object.assign(InventoryItemWithProperty, this.InventoryItem);
+        Object.assign(InventoryItemWithProperty, this.ParentInventoryItem);
+        InventoryItemWithProperty.InventoryId = "00000000-0000-0000-0000-000000000000";
         InventoryItemWithProperty.InventoryName += " (" + color + ")";
         InventoryItemWithProperty.SKUCode += "-" + prefix;
         InventoryItemWithProperty.Prefix = prefix;
         InventoryItemWithProperty.Color = color;
-        this.InventoryItems.push(InventoryItemWithProperty);
+        return InventoryItemWithProperty;
+    }
+  },
+ 
+  created: function() {
+    // Lấy thông tin hàng hoá chi tiết có sẵn
+    
+    //Khi thông tin thuộc tính màu sắc nhập vào thay đổi
+    //Created By: VM Hùng (04/09/2021)
+    this.$root.$on("newColorInput", (e: Array<string>) => {
+      this.InventoryItems = [];
+      // Nếu thêm mới
+      if (e.length > this.$store.state.inventoriesDetail.length) {
+          let color = e[e.length - 1];  
+          let inventoryItem = this.createInventoryByColor(color);
+          this.$store.commit("insertInventoryDetail", inventoryItem);
+      } else {
+        // Xoá màu
+        this.$store.dispatch("DeleteInventoryDetailByColor", e);
+      }
+      // create list sub invetory item with properti
+      e.forEach((color, i) => {
+        // Lấy tiền tố của màu sắc
+        let inventoryItem = this.createInventoryByColor(color);
+        this.InventoryItems.push(inventoryItem);
+        
       });
     });
+  },
+  
+  computed:{
+    ...mapGetters({
+      inventoriesDetail: "inventoriesDetail",
+    }),
+  },
+
+  watch: {
+    "InventoryItem.InventoryName"() {
+      console.log("calling")
+      this.$store.dispatch("UpdateInventoriesDetailName", this.ParentInventoryItem.InventoryName)
+    },
+    "InventoryItem.InventoryItemCode"() {
+      this.InventoryItems.forEach((e) => {
+        e.SKUCode =
+          this.ParentInventoryItem.SKUCode + "-" + e.Prefix;
+      });
+    },
+    
   },
 });
 </script>

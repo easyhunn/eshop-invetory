@@ -386,7 +386,7 @@ import Alert from "../base/the-alert.vue";
 import AlertErrorDefault from "../base/alert-error-default.vue";
 import { InventoryFilter } from "../../store/inventory-filter";
 import {InventoryStore} from "../../store/inventory";
-import { mapGetters, mapState } from "vuex";
+import { mapGetters } from "vuex";
 
 export default Vue.extend({
   name: "Content",
@@ -496,6 +496,9 @@ export default Vue.extend({
     displayDialog(type: number) {
       this.showDialog = true;
       let dialog = this.$refs.Dialog as any;
+      if (type != 1) this.$store.dispatch("getInventoriesDetail");
+      // xoá thông tin chi tiết
+      else this.$store.commit("clearInventoriesDetail")
       dialog.showDialog(type);
     },
     InsertInventory() {

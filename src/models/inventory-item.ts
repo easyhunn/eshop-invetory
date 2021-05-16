@@ -1,4 +1,5 @@
 export default interface Iventory {
+  InventoryId?: string;
   InventoryName: string;
   InventoryGroup?: string;
   SKUCode?: string;
@@ -8,5 +9,6 @@ export default interface Iventory {
   Unit?: string;
   Display?:  number;
   Prefix?: string;
-  Color?: string
+  Color?: string,
+  ParentId?: string
 }

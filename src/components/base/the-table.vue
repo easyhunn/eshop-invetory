@@ -479,7 +479,7 @@
 }
 </style>
 <script lang="ts">
-import Vue, {PropType} from "vue";
+import Vue from "vue";
 import { mapGetters } from "vuex";
 import {InventoryFilter} from "../../store/inventory-filter";
 import {InventoryStore} from "../../store/inventory";

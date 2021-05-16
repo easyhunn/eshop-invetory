@@ -1,7 +1,11 @@
 <template>
     <div class="input-tag-container">
         <div style="min-width: 137px;" class="input-symbol left-input-side ">Màu sắc</div>
-        <InputTag class="input-content" @input="onInput"/>
+        <InputTag class="input-content" 
+            @input="onInput"
+            :add-tag-on-blur="true"
+            :value="value"
+        />
     </div>
 </template>
 <style lang="scss">
@@ -64,10 +68,13 @@ export default {
     components:{
         InputTag
     },
+    props: [
+        "value"
+    ],
     methods: {
         onInput(e) {
             this.$root.$emit("newColorInput", e);
         }
-    }
+    },
 }
 </script>
