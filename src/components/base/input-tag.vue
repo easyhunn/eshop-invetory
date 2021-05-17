@@ -4,7 +4,7 @@
         <InputTag class="input-content" 
             @input="onInput"
             :add-tag-on-blur="true"
-            :value="value"
+            :value="dValue"
         />
     </div>
 </template>
@@ -68,6 +68,11 @@ export default {
     components:{
         InputTag
     },
+    data:function () {
+        return {
+            dValue: []
+        }
+    },
     props: [
         "value"
     ],
@@ -76,5 +81,13 @@ export default {
             this.$root.$emit("newColorInput", e);
         }
     },
-}
+    watch: {
+        value() {
+            this.dValue = this.value;
+        }
+    },
+    mounted() {
+        this.dValue = this.value;
+    }
+ }
 </script>

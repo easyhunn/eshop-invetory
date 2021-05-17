@@ -38,10 +38,16 @@
             1234
           </td>
           <td class="edit-able" style="max-width:78px; min-width:78px">
-            {{ Inventory.PurchasePrice }}
-            <input
+            <!-- {{ Inventory.PurchasePrice }} -->
+            {{ Inventory.PurchasePrice | formatMoney }}
+            <!-- <input
               type="number"
               v-model="Inventory.PurchasePrice"
+              class="hidden-input d-input"
+            /> -->
+            <CurrencyInput
+              :defaultValue="Inventory.PurchasePrice"
+              @onKeyup="Inventory.PurchasePrice = $event"
               class="hidden-input d-input"
             />
           </td>
@@ -54,7 +60,10 @@
             />
           </td>
           <td class="edit-able" style="max-width:28px; min-width:28px">
-            <button class="d-icon icon-delete-red"></button>
+            <button
+              class="d-icon icon-delete-red"
+              v-on:click="deleteInventoryByColor(Inventory.Color)"
+            ></button>
           </td>
         </tr>
       </table>
@@ -107,11 +116,13 @@
 </style>
 
 <script lang="ts">
-import Vue from "vue";
+import Vue, { PropType } from "vue";
 import { mapGetters } from "vuex";
 import Table from "./the-table.vue";
 import InventoryItem from "../../models/inventory-item";
 import CommonFuncion from "../../services/common";
+import CurrencyInput from "./currency-input.vue";
+
 export default Vue.extend({
   data: function() {
     return {
@@ -119,77 +130,79 @@ export default Vue.extend({
     };
   },
   props: {
-    ParentInventoryItem: { type: Object as () => InventoryItem },
-    formType: {type: Number}
+    parentInventoryItem: { type: Object as PropType<InventoryItem> },
+    formType: { type: Number },
   },
-  components: { Table },
+  components: { Table, CurrencyInput },
+
   methods: {
-    createInventoryByColor(color:string) {
+    //Cập nhật lại thuộc tính tên, skucode khi dữ liệu hàng hoá gốc thay đổi
+    //Created By: VM Hùng (17/05/2021)
+    updateParentInventory() {
+      console.log(this.parentInventoryItem.InventoryName);
+      this.$store.dispatch("UpdateInventoriesDetailByParent", 
+                            [this.parentInventoryItem.InventoryName ,
+                            this.parentInventoryItem.SKUCode])
+    },
+    // Xoá hàng hoá bởi màu sắc
+    // Created By: VM Hùng (16/05/2021)
+    deleteInventoryByColor(color: string) {
+      this.$store.dispatch("DeleteInventoryDetailByColor", color);
+    },
+    //Tạo mới 1 chi tiết hàng hoá theo màu sắc
+    //Created By: VM Hùng (16/05/2021)
+    createInventoryByColor(color: string) {
       let colorEnglish = CommonFuncion.removeVietnameseTones(color);
-        let prefix = CommonFuncion.getFirstLetter(colorEnglish).toUpperCase();
-        if (prefix.length < 2) {
-          prefix += CommonFuncion.getFirstLetter(
-            colorEnglish.substring(1)
-          ).toUpperCase();
-        }
-        // Tạo mới 1 thông tin hàng hoá
-        let InventoryItemWithProperty: InventoryItem = {
-          InventoryName: "",
-        };
-        Object.assign(InventoryItemWithProperty, this.ParentInventoryItem);
-        InventoryItemWithProperty.InventoryId = "00000000-0000-0000-0000-000000000000";
-        InventoryItemWithProperty.InventoryName += " (" + color + ")";
-        InventoryItemWithProperty.SKUCode += "-" + prefix;
-        InventoryItemWithProperty.Prefix = prefix;
-        InventoryItemWithProperty.Color = color;
-        return InventoryItemWithProperty;
-    }
+      let suffix = CommonFuncion.getFirstLetter(colorEnglish).toUpperCase();
+      if (suffix.length < 2) {
+        suffix += CommonFuncion.getFirstLetter(
+          colorEnglish.substring(1)
+        ).toUpperCase();
+      }
+      // Tạo mới 1 thông tin hàng hoá
+      let InventoryItemWithProperty: InventoryItem = {
+        InventoryName: "",
+      };
+      Object.assign(InventoryItemWithProperty, this.parentInventoryItem);
+      InventoryItemWithProperty.InventoryId =
+        "00000000-0000-0000-0000-000000000000";
+      InventoryItemWithProperty.InventoryName += " (" + color + ")";
+      InventoryItemWithProperty.SKUCode += "-" + suffix;
+      InventoryItemWithProperty.Suffix = suffix;
+      InventoryItemWithProperty.Color = color;
+      return InventoryItemWithProperty;
+    },
   },
- 
+
   created: function() {
     // Lấy thông tin hàng hoá chi tiết có sẵn
-    
+
     //Khi thông tin thuộc tính màu sắc nhập vào thay đổi
     //Created By: VM Hùng (04/09/2021)
     this.$root.$on("newColorInput", (e: Array<string>) => {
       this.InventoryItems = [];
       // Nếu thêm mới
       if (e.length > this.$store.state.inventoriesDetail.length) {
-          let color = e[e.length - 1];  
-          let inventoryItem = this.createInventoryByColor(color);
-          this.$store.commit("insertInventoryDetail", inventoryItem);
+        let color = e[e.length - 1];
+        let inventoryItem = this.createInventoryByColor(color);
+        this.$store.commit("insertInventoryDetail", inventoryItem);
       } else {
         // Xoá màu
-        this.$store.dispatch("DeleteInventoryDetailByColor", e);
+        this.$store.dispatch("DeleteInventoryDetailByCompareColor", e);
       }
       // create list sub invetory item with properti
       e.forEach((color, i) => {
         // Lấy tiền tố của màu sắc
         let inventoryItem = this.createInventoryByColor(color);
         this.InventoryItems.push(inventoryItem);
-        
       });
     });
   },
-  
-  computed:{
+  computed: {
     ...mapGetters({
       inventoriesDetail: "inventoriesDetail",
     }),
   },
-
-  watch: {
-    "InventoryItem.InventoryName"() {
-      console.log("calling")
-      this.$store.dispatch("UpdateInventoriesDetailName", this.ParentInventoryItem.InventoryName)
-    },
-    "InventoryItem.InventoryItemCode"() {
-      this.InventoryItems.forEach((e) => {
-        e.SKUCode =
-          this.ParentInventoryItem.SKUCode + "-" + e.Prefix;
-      });
-    },
-    
-  },
+  
 });
 </script>

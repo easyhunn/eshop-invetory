@@ -40,4 +40,28 @@ function getFirstLetter (str:string) {
 
     return acronym;
 }
-export default { removeVietnameseTones, getFirstLetter };
+//Đảo ngược kí tự trong chuỗi
+//Created By: Vm Hùng (16/05/2021)
+function reverse(s:string){
+    return s.split("").reverse().join("");
+}
+// Thay thế kí tự find trong chuỗi str bằng kí tự replace 
+//Created By: Vm Hùng (16/05/2021)
+function replaceAll(str:string, find:string, replace:string) {
+    var escapedFind=find.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+    return str.replace(new RegExp(escapedFind, 'g'), replace);
+}
+function stringToCurrency(number: number) {
+    
+    let str = number.toString();
+    str = replaceAll(str, ".", '');
+    str = reverse(str);
+    let showValue = str.match(/.{1,3}/g);
+    return reverse((showValue?.join(".") || ""));
+    // if (number) {
+        
+    // } else {
+    //     this.displayValue = ""
+    // }
+}
+export default { removeVietnameseTones, getFirstLetter, stringToCurrency};

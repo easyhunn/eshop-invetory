@@ -32,7 +32,7 @@
       </button>
     </div>
     <div class="table">
-      <Table />
+      <Table @rowDblClick="rowDblClick"/>
     </div>
     <div class="footer">
       <div class="pagging">
@@ -397,7 +397,7 @@ import { InventoryFilter } from "../../store/inventory-filter";
 import {InventoryStore} from "../../store/inventory";
 import { mapGetters } from "vuex";
 import AlertDeleteError from "../base/alert-delete-error.vue";
-import {SaveType} from "../../core/enums/save-type";
+import MISA_CODE from "../../core/consts/misa-code"
 
 export default Vue.extend({
   name: "Content",
@@ -422,6 +422,10 @@ export default Vue.extend({
     };
   },
   methods: {
+    //
+    rowDblClick() {
+      this.displayDialog(3);
+    },
     // Tải lại dữ liệu toàn bộ trang
     //Created By: VM Hùng(16/05/2021)
     reloadAllData() {
@@ -449,7 +453,7 @@ export default Vue.extend({
     //Created By: VM Hùng(15/05/2021)
     deleteInventory() {
       //Xoá bản ghi đang được chọn
-      if (this.$store.getters.listIdsSize > 1) {
+      if (this.$store.getters.listIdsSize > 0) {
         this.$store.dispatch("DeleteInventories");
       } else {
         this.$store.dispatch("DeleteInventory");
@@ -530,6 +534,7 @@ export default Vue.extend({
     // 3: sửa
     // 2: nhân bản
     displayDialog(type: number) {
+
       this.$store.commit("setFormType", type)
       this.showDialog = true;
       let dialog = this.$refs.Dialog as any;
@@ -545,8 +550,11 @@ export default Vue.extend({
     },
     //Ẩn dialog thêm/sửa
     hideDialog() {
-      this.$store.commit("setFormType", 0)
-      this.showDialog = false;
+      if (this.success) {
+        this.$store.commit("setFormType", 0)
+        this.showDialog = false;
+      }
+      this.$store.commit("setSuccessStatus", true);
     },
     //Hiện dialog xoá
     displayDeleteAlert() {
@@ -561,6 +569,8 @@ export default Vue.extend({
     //Ẩn dialog xoá
     hideDeleteAlert() {
       this.showDeleteAlert = false;
+      this.$store.commit("setSuccessStatus", true);
+
     },
   },
   computed: {
@@ -568,11 +578,13 @@ export default Vue.extend({
       totalRecord: "totalRecord",
       loading: "loading",
       selectedIdsSize: "listIdsSize",
-      error: "error"
+      success: "success"
     }),
   },
 
   watch: {
+    //Tổng số bản ghi thay đổi
+    //Created By: VM Hùng (17/05/2021)
     totalRecord() {
       let extend = this.totalRecord % this.pageSize;
       let total: any = this.totalRecord / this.pageSize;
@@ -581,24 +593,29 @@ export default Vue.extend({
       } else {
         this.totalPage = parseInt(total) + 1;
       }
-      // chặn nhân bản sửa khi không có bản ghi
-      if (this.totalRecord < 1) {
-       this.disableDuplicate = true;
-       this.disableUpdate = true; 
-      } else {
-        this.disableDuplicate = false;
-        this.disableUpdate = false; 
-      }
+      
     },
-    error() {
-      // lỗi xoá thất bại
-      this.displayAlertDeleteError();
-    },
+    //Kiểm tra lấy dữ liệu thành công
+    //Created By: VM Hùng (15/05/2021)
 
+    async success() {
+      if (!this.success) {
+        // Kiểm tra nếu là lỗi xoá
+        if (this.$store.state.errorCode == MISA_CODE.INTERNAL_EXCEPTION
+           && !this.showDialog
+        ) {
+          this.displayAlertDeleteError();
+        } 
+      }
+      
+    },
+    // Kiểm tra kích thược mảng nhưng id được chọn
+    //Created By: VM Hùng (16/05/2021)
     selectedIdsSize() {
       var duplicate = this.$refs.duplicateInventory as HTMLElement;
       var update = this.$refs.updateInventory as HTMLElement;
-
+      
+      //Khi danh sách id được chọn ẩn nhân bản sửa
       if (this.selectedIdsSize > 1) {
         this.disableDuplicate = true;
         this.disableUpdate = true; 
@@ -613,6 +630,7 @@ export default Vue.extend({
     }
   },
   mounted: function() {
+    
     let prevPage = this.$refs.prevPage as HTMLElement;
     prevPage.classList.add("disable");
     let firstPage = this.$refs.firstPage as HTMLElement;

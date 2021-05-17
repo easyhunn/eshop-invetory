@@ -1,4 +1,4 @@
-export default interface Iventory {
+export default interface Inventory {
   InventoryId?: string;
   InventoryName: string;
   InventoryGroup?: string;
@@ -8,7 +8,7 @@ export default interface Iventory {
   Status?: number; 
   Unit?: string;
   Display?:  number;
-  Prefix?: string;
+  Suffix?: string;
   Color?: string,
   ParentId?: string
 }

@@ -3,6 +3,8 @@ import Vuex from "vuex";
 import InventoryItem from "../models/inventory-item";
 import InventoryService from "../services/inventory-service";
 import {InventoryStore} from "./inventory";
+import CommonFuncion from "../services/common";
+
 
 Vue.use(Vuex);
 // Trạng thái mặc định của store
@@ -13,11 +15,12 @@ const getDefaultState = () => {
     inventoriesDetail: Array<InventoryItem>(),// danh sách hàng hoá con
     selectedInventoriesDetailId: Array<string>(),// danh sách hàng hoá chi tiết chọn để xoá 
     colors: Array<string>(),
-    selectedIds: [""], // Danh sách id được chọn
+    selectedIds: Array<string>(), // Danh sách id được chọn
     totalRecord: 0,
     loading: false,
     success: true,
     errorMsg: "",
+    errorCode:"",
     formType: 0
   };
 };
@@ -27,15 +30,16 @@ export default new Vuex.Store({
     inventoriesDetail: Array<InventoryItem>(), // danh sách hàng hoá con
     selectedInventoriesDetailId: Array<string>(), // danh sách hàng hoá chi tiết chọn để xoá
     colors: Array<string>(),
-    selectedIds: [""],
+    selectedIds: Array<string>(),
     totalRecord: 0,
     loading: false,
     success: true,
     errorMsg: "",
+    errorCode: "",
     formType: 0,
   },
   mutations: {
-    setFormType(state, type:number) {
+    setFormType(state, type: number) {
       state.formType = type;
     },
     // Thêm thông tin hàng hoá
@@ -45,6 +49,8 @@ export default new Vuex.Store({
     },
     // Thêm chi tiết hàng hoá vào store
     insertInventoryDetail(state, inventoryDetail: InventoryItem) {
+
+      // Lấy Id cha là id bản ghi đang đc chọn
       inventoryDetail.ParentId = InventoryStore.state.inventoryId;
       state.inventoriesDetail.push(inventoryDetail);
       if (inventoryDetail.Color) state.colors.push(inventoryDetail.Color);
@@ -63,18 +69,26 @@ export default new Vuex.Store({
     clearData(state) {
       Object.assign(state, getDefaultState());
     },
+    // Bắt đầu tải lại dữ liệu
+    // Created By: VM Hùng(14/05/2021)
     startLoading(state) {
       state.success = true;
       state.loading = true;
     },
+    // Tải dữ liệu thành công
+    // Created By: VM Hùng(14/05/2021)
     stopLoading(state) {
       state.loading = false;
     },
     // Khi có lỗi
     // Created By: VM Hùng(14/05/2021)
-    setError(state, errorMsg) {
+    setError(state, [errorMsg, errorCode]) {
       state.success = false;
       state.errorMsg = errorMsg;
+      state.errorCode = errorCode;
+    },
+    setSuccessStatus(state, status: boolean) {
+      state.success = status;
     },
     // Thêm id của bản ghi đã được chọn
     // Created By: VM Hùng(15/05/2021)
@@ -118,66 +132,91 @@ export default new Vuex.Store({
     async InsertInventory(context, inventoryItem: InventoryItem) {
       if (inventoryItem.Status) inventoryItem.Status = 1;
       else inventoryItem.Status = 0;
-      await context.commit("startLoading");
       // Thêm thông tin chi tiết bản ghi
       if (this.state.inventoriesDetail.length > 0) {
         for (let inventory of this.state.inventoriesDetail) {
-          await InventoryService.InsertInventoryDetail(inventory);
+          
+          if (this.state.success) {
+            await this.dispatch("InsertInventoryDetail", inventory);
+          } else {
+            return;
+          }
         }
       }
-      await InventoryService.InsertInventory(inventoryItem)
-        .then((data: any) => {
-          console.log("Thêm thành công");
-        })
-        .catch((e) => {
-          context.commit("setError", e.response.data.message);
-        });
+      if (this.state.success) {
+        await context.commit("startLoading");
 
-      // Tải lại trang
-      await this.dispatch("getByPaging");
-      context.commit("stopLoading");
+        await InventoryService.InsertInventory(inventoryItem)
+          .then((data: any) => {
+            // console.log("Thêm thành công");
+          })
+          .catch((e) => {
+            context.commit("setError", [
+              inventoryItem.SKUCode,
+              e.response.data.errorCode,
+            ]);
+          });
+        // Tải lại trang
+        await this.dispatch("getByPaging");
+        context.commit("stopLoading");
+      }
     },
     // Thêm mới chi tiết hàng hoá (thêm/sửa)
     //Created by: VM Hùng(15/05/2021)
     async InsertInventoryDetail(context, inventoryItem: InventoryItem) {
       if (inventoryItem.Status) inventoryItem.Status = 1;
       else inventoryItem.Status = 0;
+      if (this.state.success) {
+        await InventoryService.InsertInventoryDetail(inventoryItem)
+          .then((data: any) => {
+            // console.log("Thêm thành công");
+          })
 
-      await InventoryService.InsertInventoryDetail(inventoryItem)
-        .then((data: any) => {
-          console.log("Thêm thành công");
-        })
-        .catch((e) => {
-          context.commit("setError", e.response.data.message);
-        });
+          .catch((e) => {
+            console.log(e.response.data);
+            context.commit("setError", [
+              inventoryItem.SKUCode,
+              e.response.data.errorCode,
+            ]);
+            this.state.success = false;
+          });
+      }
     },
     // Sửa thông tin hàng hoá
     // Created By: VM Hùng (16/05/2021)
     async UpdateInventory(context: any, inventoryItem: InventoryItem) {
       await context.commit("startLoading");
       // xoá thông tin chi tiết được chọn
-      console.log(this.state.selectedInventoriesDetailId);
+      // console.log(this.state.selectedInventoriesDetailId);
       if (this.state.selectedInventoriesDetailId.length > 0) {
         for (let inventoryId of this.state.selectedInventoriesDetailId) {
+         
           if (inventoryId) await InventoryService.DeleteInventory(inventoryId);
         }
       }
       // Thêm thông tin chi tiết bản ghi
       if (this.state.inventoriesDetail.length > 0) {
         for (let inventory of this.state.inventoriesDetail) {
-          await InventoryService.InsertInventoryDetail(inventory);
+          
+          if (this.state.success)
+            await this.dispatch("InsertInventoryDetail", inventory);
         }
       }
-      await InventoryService.UpdateInventory(
-        InventoryStore.state.inventoryId,
-        inventoryItem
-      )
-        .then((data: any) => {
-          this.dispatch("getByPaging");
-        })
-        .catch((e) => {
-          context.commit("setError", e.response.data.message);
-        });
+      if (this.state.success) {
+        await InventoryService.UpdateInventory(
+          InventoryStore.state.inventoryId,
+          inventoryItem
+        )
+          .then((data: any) => {
+            this.dispatch("getByPaging");
+          })
+          .catch((e) => {
+            context.commit("setError", [
+              e.response.data.message,
+              e.response.data.errorCode,
+            ]);
+          });
+      }
 
       context.commit("stopLoading");
     },
@@ -190,7 +229,10 @@ export default new Vuex.Store({
           this.dispatch("getByPaging");
         })
         .catch((e) => {
-          context.commit("setError", e.response.data.message);
+          context.commit("setError", [
+            e.response.data.message,
+            e.response.data.errorCode,
+          ]);
         });
       context.commit("stopLoading");
     },
@@ -203,7 +245,11 @@ export default new Vuex.Store({
           this.dispatch("getByPaging");
         })
         .catch((e) => {
-          context.commit("setError", e.response.data.message);
+          this.dispatch("getByPaging");
+          context.commit("setError", [
+            e.response.data.message,
+            e.response.data.errorCode,
+          ]);
         });
       context.commit("stopLoading");
     },
@@ -229,10 +275,22 @@ export default new Vuex.Store({
         this.commit("clearInventoriesDetail");
       }
     },
-
-    // Xoá chi tiết hàng hoá theo id
+    // Xoá
+    DeleteInventoryDetailByColor(context, color: string) {
+      // Xoá chi tiết hàng hoá
+      this.state.inventoriesDetail = this.state.inventoriesDetail.filter(
+        function(item: InventoryItem) {
+          if (item.Color) return item.Color != color;
+        }
+      );
+      // xoá màu sắc chi tiết hàng hoá
+      this.state.colors = this.state.colors.filter(function(item: string) {
+        if (item) return item != color;
+      });
+    },
+    // Xoá chi tiết hàng hoá theo màu sắc
     // Created By: VM Hùng (16/05/2021)
-    DeleteInventoryDetailByColor(context, color: Array<string>) {
+    DeleteInventoryDetailByCompareColor(context, color: Array<string>) {
       // this.state.inventoriesDetail = this.state.inventoriesDetail.filter(
       //   function(item: InventoryItem) {
       //     if (item.Color) return color.includes(item.Color);
@@ -254,36 +312,67 @@ export default new Vuex.Store({
       }
     },
     // Cập nhật tên chi tiết hàng hoá
-    UpdateInventoriesDetailName(context, name: string) {
+    // Created By: VM Hùng(17/05/2021)
+    UpdateInventoriesDetailByParent(context, [name, code]) {
       this.state.inventoriesDetail.forEach((inventory: InventoryItem) => {
-        inventory.InventoryName = name;
+        inventory.InventoryName = name + " ("+inventory.Color+")";
+        let colorEnglish = CommonFuncion.removeVietnameseTones(inventory.Color||"");
+        let suffix = CommonFuncion.getFirstLetter(colorEnglish).toUpperCase();
+        if (suffix.length < 2) {
+          suffix += CommonFuncion.getFirstLetter(
+            colorEnglish.substring(1)
+          ).toUpperCase();
+        }
+        inventory.SKUCode = code + "-" + suffix;
       });
     },
   },
   getters: {
+    // Lấy danh sách tất cả các hàng hoá đang hiển thị
+    // Created By: VM Hùng(17/05/2021)
     inventories(state) {
       return state.inventories;
     },
+    // tông tất cả các bản ghi
+    // Created By: VM Hùng(17/05/2021)
+
     totalRecord(state) {
       return state.totalRecord;
     },
+    // Trạng thái tải dữ liệu
+    // Created By: VM Hùng(17/05/2021)
+
     loading(state) {
       return state.loading;
     },
-    error(state) {
-      return state.success;
-    },
+    // thông báo lỗi
+    // Created By: VM Hùng(17/05/2021)
+
     errorMsg(state) {
       return state.errorMsg;
     },
+    // số lượng bản ghi đang được chọn
+    // Created By: VM Hùng(17/05/2021)
+
     listIdsSize(state) {
       return state.selectedIds.length;
     },
+    //Danh sách các bản ghi chi tiết
+    // Created By: VM Hùng(17/05/2021)
+
     inventoriesDetail(state) {
       return state.inventoriesDetail;
     },
+    //Danh sách thuộc tính màu sắc của bản ghi chi tiết
+    // Created By: VM Hùng(17/05/2021)
+
     inventoriesDetailColor(state) {
       return state.colors;
+    },
+    // Trạng thái lấy dữ liệu thành công
+    // Created By: VM Hùng(17/05/2021)
+    success(state) {
+      return state.success;
     },
   },
   modules: {},

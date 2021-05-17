@@ -1,7 +1,5 @@
 <template>
   <div class="InventoryItem">
-    <Menu />
-    <Header />
     <Content /> 
   </div>
 </template>

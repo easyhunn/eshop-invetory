@@ -31,15 +31,22 @@
     </vue-autosuggest>
 
     <div ref="inputSymbol" class="input-symbol d-icon icon-quick-add right-input-side"></div>
+    <div ref="InputErrorIcon" class="d-icon icon-exclamation"></div>
+    <span class="input-required">
+        Giá trị bạn chọn không có trong danh sách
+    </span>
   </div>
   
 </template>
 <style lang="scss">
+
 .input-container {
+  width: 205px;
+  min-width: 195px;
   input {
     background: url("../../assets/Icon/arrow-down-line.png");
     background-repeat: no-repeat;
-    background-position-x: calc(100% - 5px);
+    background-position-x: 96%;
     background-position-y: 50%;
     padding: 5px 10px !important;
     border-right: none;
@@ -89,8 +96,24 @@
 .input-group {
   z-index: 10;
   flex-direction: row;
+  .icon-exclamation {
+    min-width: 16px;
+    position: relative;
+    left: 3px;
+    top: 10px;
+  }
+  .icon-exclamation:hover {
+    &+.input-required {
+      display: block;
+    }
+  }
+  .input-required {
+    position: relative;
+    top: 34px;
+    display: none;
+  }
   input {
-    width: 195px;
+    width: calc(100% - 21px);
   }
   .input-symbol {
     height: 22px;
@@ -128,7 +151,7 @@ export default {
       return [
         { 
           data: this.suggestions[0].data.filter(option => {
-            return option.name.toLowerCase().indexOf(this.query.toLowerCase()) > -1;
+              return option.name.toLowerCase().indexOf(this.query.toLowerCase()) > -1;
           })
         }
       ];
@@ -138,12 +161,24 @@ export default {
     clickHandler(item) {
       // event fired when clicking on the input
     },
+    // Khi giá trị được chọn
+    //Created By: VM Hùng (16/05/2021)
     onSelected(item) {
       this.selected = item.item;
-      this.$emit("input", this.selected.name)
     },
+    // khi thay đổi giá trị ô input
+    //Created By: VM Hùng (16/05/2021)
+
     onInputChange(text) {
-      this.$emit("input", text)
+      if (!this.filteredOptions[0].data.length) {
+        this.$refs.InputErrorIcon.style.display="block";
+        this.$emit("noSuggestion", true)
+      } else {
+        this.$refs.InputErrorIcon.style.display="none";
+
+        this.$emit("noSuggestion", false)
+      }
+      // this.$emit("input", text)
     },
     /**
      * This is what the <input/> value is set to when you are selecting a suggestion.
@@ -151,14 +186,30 @@ export default {
     getSuggestionValue(suggestion) {
       return suggestion.item.name;
     },
+    //focus Input
+    //Created By: VM Hùng (16/05/2021)
+
     focusMe(e) {
       this.$refs.inputSymbol.style.borderColor = "#636dde";
       this.$refs.inputSymbol.style.borderLeftColor= "#d2d2d2";
     },
+    // khi blur ô input
+    //Created By: VM Hùng (16/05/2021)
+
     onBlur(){
         this.$refs.inputSymbol.style.borderColor= "#d2d2d2";
+        if (this.query != this.selected.name) {
+          this.query = "";
+          this.$emit("input", "")
+        } else {
+        this.$emit("input", this.selected.name)
+
+        }
     },
+    //Giá trị trả về của list danh sách gợi ý
+    //Created By: VM Hùng (16/05/2021)
     renderSuggestion(suggestion) {
+        
         return this.$createElement('div', { 'style': {height: '22px', padding: '2px 5px' }, class: "list-content" }, suggestion.item.name);
     },
   },

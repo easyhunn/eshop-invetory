@@ -1,5 +1,7 @@
 <template>
   <div id="app">
+    <Menu />
+    <Header />
     <router-view/>
   </div>
 </template>
@@ -16,8 +18,10 @@ import "./css/font.css";
 import "./css/input.css";
 import "./css/main.css";
 import "./css/footer.css";
+import Header from "./components/layout/Header.vue";
+import Menu from "./components/layout/Menu.vue";
 
 export default Vue.extend({
-  
+  components: {Header, Menu },
 })
 </script>

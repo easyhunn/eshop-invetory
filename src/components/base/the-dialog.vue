@@ -25,11 +25,11 @@
       <div class="dialog-row" v-show="formType==3" ref="Status">
         <label for=""> Trạng thái Kinh doanh</label>
         <span class="group-radio">
-          <input type="radio" name="status" v-model="InventoryItem.Status"/>
+          <input type="radio" :value="1" name="status" v-model="inventoryItem.Status"/>
           <label for="tt">Đang kinh doanh</label>
         </span>
         <span class="group-radio">
-          <input type="radio" name="status" v-model="InventoryItem.Status"/>
+          <input type="radio" :value="0" name="status" v-model="inventoryItem.Status"/>
           <label for="tt">Ngừng hoạt động</label>
           
         </span>
@@ -38,7 +38,7 @@
         <label for=""> Tên hàng hoá <span class="text-red">*</span> </label>
         <div class="input-group">
           <input ref="InventoryItemName" type="text" 
-            v-model="InventoryItem.InventoryName" 
+            v-model="inventoryItem.InventoryName" 
             v-on:blur="itemNameBlur">
           <div  ref="InventoryNameError" class="d-icon icon-exclamation"></div>
           <span class="input-required">
@@ -51,9 +51,10 @@
           Nhóm hàng hoá
         </label>
         <AutocompleteInput style="z-index:11;" 
-          :value="InventoryItem.InventoryGroup" 
+          :value="inventoryItem.InventoryGroup" 
           :suggestions="InventoryItemGroups"
-          @input="(e) => InventoryItem.InventoryGroup = e"/>
+          @input="(e) => inventoryItem.InventoryGroup = e"/>
+        
       </div>
       <!-- <div class="dialog-row">
         <label for="">
@@ -74,7 +75,7 @@
           <input type="text"
             ref="SKUCode"
             placeholder="Hệ thống tự sinh khi bỏ trống" 
-            v-model="InventoryItem.SKUCode" 
+            v-model="inventoryItem.SKUCode" 
             v-on:blur="SKUCodeBlur">
           <div  ref="SKUCodeError" class="d-icon icon-exclamation"></div>
           <span class="input-required">
@@ -87,7 +88,7 @@
           Giá mua <span class="d-icon icon-question"></span>
         </label>
         <CurrencyInput @onKeyup="purchasePriceChange" 
-          :defaultValue="InventoryItem.PurchasePrice"/>
+          :defaultValue="inventoryItem.PurchasePrice"/>
         
       </div>
       <div class="dialog-row">
@@ -95,7 +96,7 @@
           Giá bán
         </label>
         <CurrencyInput @onKeyup="salePriceChange"
-          :defaultValue="InventoryItem.SalePrice"/>
+          :defaultValue="inventoryItem.SalePrice"/>
       </div>
       
       <div class="dialog-row">
@@ -103,17 +104,22 @@
           Đơn vị tính 
         </label>
         <AutocompleteInput 
-          :value="InventoryItem.Unit" 
+          :value="inventoryItem.Unit" 
           :suggestions="Units"
-          @input="(e) => InventoryItem.Unit = e"/>
+          @input="(e) => inventoryItem.Unit = e"
+          />
+        
       </div>
 
-      <div class="dialog-row">
-        <input type="checkbox"   @change="changeStatus($event)"/>
-        <span
-          >Hiển thị trên màn hình bán hàng
-          <span class="d-icon icon-question"></span
-        ></span>
+      <div class="dialog-row" style="align-items:center;">
+        <input type="checkbox" v-model="inventoryItem.Display" 
+            :true-value="1"   
+            :false-value="0"
+            @change="changeStatus($event)"/>
+        <span>
+          Hiển thị trên màn hình bán hàng
+          <!-- <span class="d-icon icon-question"></span> -->
+        </span>
       </div>
       <div class="contain-header">
         THÔNG TIN THUỘC TÍNH
@@ -131,8 +137,10 @@
         <label for="">
           Chi tiết thuộc tính
         </label>
-         <SubTable :ParentInventoryItem="InventoryItem" 
-         :formType="formType"/>
+        <SubTable 
+          ref="SubTable"
+          :parentInventoryItem="inventoryItem"
+          :formType="formType"/>
       </div>
       <div class="contain-header">
         THÔNG BỔ SUNG
@@ -341,7 +349,7 @@
         padding: 5px 10px ;
         font-size: 13px ;
         
-        width: 216px ;
+        width: 212px ;
         min-width: 194px;
       }
       input {
@@ -385,13 +393,15 @@ import InventoryService from "../../services/inventory-service";
 import {InventoryStore} from "../../store/inventory";
 import { mapGetters } from "vuex";
 import CurrencyInput from "./currency-input.vue";
+import MISA_MSG from "../../core/consts/misa-message";
 
 export default Vue.extend({
   
 data: function () {
     return {
+        parentInventoryName: "",
         formType: SaveType.Insert,
-        InventoryItem: {
+        inventoryItem: {
           SKUCode: ""
         } as InventoryItem,
         items: ["đồ ăn", "đồ uống"],
@@ -408,7 +418,6 @@ data: function () {
               { name: "Đồ dùng" },
               { name: "Thực phẩm" },
               { name: "Rau sạch" },
-              
             ]
           }
         ],
@@ -445,13 +454,13 @@ components: {
 },
 methods: {
   salePriceChange(value:any) {
-    this.InventoryItem.SalePrice = value;
+    this.inventoryItem.SalePrice = value;
   },
   purchasePriceChange(value:any) {
-    this.InventoryItem.PurchasePrice = value;
+    this.inventoryItem.PurchasePrice = value;
   },
   changeStatus(e:any) {
-    this.InventoryItem.Status = e.target.checked;
+    this.inventoryItem.Status = e.target.checked ? 1 : 0;
   },
   //Thực hiện lưu
   //Created By: VM Hùng (15/5/2021)
@@ -459,12 +468,12 @@ methods: {
     await this.validateData();
     if (this.isValid) {
       if (this.formType == SaveType.Insert || this.formType == SaveType.Duplicate) {
-        this.$store.dispatch("InsertInventory", this.InventoryItem);
-        this.$emit("close",1);
+        await this.$store.dispatch("InsertInventory", this.inventoryItem);
+        if (this.success) this.$emit("close",1);
       }
       if (this.formType == SaveType.Update) {
-        this.$store.dispatch("UpdateInventory", this.InventoryItem);
-        this.$emit("close",1);
+        await this.$store.dispatch("UpdateInventory", this.inventoryItem);
+        if (this.success) this.$emit("close",1);
       }
     }
   },
@@ -474,11 +483,11 @@ methods: {
     await this.validateData();
     if (this.isValid) {
       if (this.formType == SaveType.Insert || this.formType == SaveType.Duplicate) {
-        this.$store.dispatch("InsertInventory", this.InventoryItem);
+        this.$store.dispatch("InsertInventory", this.inventoryItem);
         this.clearForm();
       } 
       if (this.formType == SaveType.Update) {
-        this.$store.dispatch("UpdateInventory", this.InventoryItem);
+        this.$store.dispatch("UpdateInventory", this.inventoryItem);
         this.formType = SaveType.Insert;
         this.clearForm();
 
@@ -491,11 +500,11 @@ methods: {
     await this.validateData();
     if (this.isValid) {
       if (this.formType == SaveType.Insert || this.formType == SaveType.Duplicate) {
-        await this.$store.dispatch("InsertInventory", this.InventoryItem);
+        await this.$store.dispatch("InsertInventory", this.inventoryItem);
         this.generateInvetoryItemCode();
       }
       if (this.formType == SaveType.Update) {
-        this.$store.dispatch("UpdateInventory", this.InventoryItem);
+        this.$store.dispatch("UpdateInventory", this.inventoryItem);
         this.formType = SaveType.Insert;
         this.generateInvetoryItemCode();
       }
@@ -506,17 +515,17 @@ methods: {
 
   async validateData() {
     // valid code
-    if (this.InventoryItem.SKUCode) {
+    if (this.inventoryItem.SKUCode) {
       var iconError = this.$refs.SKUCodeError as HTMLFormElement;
       var SKUCode = this.$refs.SKUCode as HTMLFormElement;
-      await InventoryService.GetBySKUCode(this.InventoryItem.SKUCode).then((data) => {
+      await InventoryService.GetBySKUCode(this.inventoryItem.SKUCode).then((data) => {
         if (data.data) {
           if (this.formType != 3) {
             iconError.style.display="block";
             SKUCode.classList.add("border-red");
             this.isValid = false;
           } else {
-            if (this.InventoryItem.SKUCode != InventoryStore.state.inventory.SKUCode) {
+            if (this.inventoryItem.SKUCode != InventoryStore.state.inventory.SKUCode) {
               iconError.style.display="block";
               SKUCode.classList.add("border-red");
               this.isValid = false;
@@ -543,16 +552,20 @@ methods: {
       
     }
   },
+  //Created By: VM Hùng (16/05/2021)
   SKUCodeBlur() {
-    if(!this.InventoryItem.SKUCode && this.InventoryItem.InventoryName) {
+    if(!this.inventoryItem.SKUCode && this.inventoryItem.InventoryName) {
       this.generateInvetoryItemCode();
+      // Cập nhật code bảng con
+      let subTable = this.$refs.SubTable as any;
+      subTable.updateParentInventory();
     }
   },
   //Tự sinh mã SKU
   //Created By: VM Hùng (08/5/2021)
   generateInvetoryItemCode () {
       
-    let englishItemName = CommonFuncion.removeVietnameseTones(this.InventoryItem.InventoryName);
+    let englishItemName = CommonFuncion.removeVietnameseTones(this.inventoryItem.InventoryName);
     let prefix = CommonFuncion.getFirstLetter(englishItemName).toUpperCase();
     //Lấy mã code lớn nhất hiện tại
     InventoryService.GetMaxCode(prefix).then((data) => {
@@ -561,9 +574,9 @@ methods: {
       if (stringData.length < 2) {
         stringData = "0" + stringData;
       }
-      this.InventoryItem.SKUCode = prefix + stringData;
+      this.inventoryItem.SKUCode = prefix + stringData;
     })
-    if(!this.InventoryItem.SKUCode) this.InventoryItem.SKUCode = "";
+    if(!this.inventoryItem.SKUCode) this.inventoryItem.SKUCode = "";
         
   },
   // focus ô input đầu tiên dialog
@@ -590,11 +603,11 @@ methods: {
     this.formType = type;
     switch (type) {
       case SaveType.Insert:
-        this.InventoryItem.Status = 1;
+        this.inventoryItem.Status = 1;
         this.clearForm();
         break;
       case SaveType.Duplicate:
-        this.InventoryItem.Status = 1;
+        this.inventoryItem.Status = 1;
         await InventoryStore.dispatch("getByInventoryId");
         this.clearFormUI();
         this.setData(InventoryStore.state.inventory);
@@ -611,7 +624,7 @@ methods: {
   // Created By: VM Hùng (15/05/2021)
   clearForm() {
     //xoá hết dữ liệu
-    Object.assign(this.InventoryItem, {
+    Object.assign(this.inventoryItem, {
       InventoryName: "",
       InventoryGroup: "",
       SKUCode: "",
@@ -638,47 +651,55 @@ methods: {
   //Điền dữ liệu vào form
   // Created By: VM Hùng (15/05/2021)
   setData(data:InventoryItem) {
-    Object.assign(this.InventoryItem,data);
+    Object.assign(this.inventoryItem,data);
   },
   // Khi tên hàng hoá không được focus
   // Created By: VM Hùng (15/05/2021)
   itemNameBlur () {
+    let subTable = this.$refs.SubTable as any;
+    subTable.updateParentInventory();
     let iconError = this.$refs.InventoryNameError as HTMLFormElement;
     let InventoryItemName = this.$refs.InventoryItemName as HTMLFormElement;
-    if (!this.InventoryItem.InventoryName) {
+    if (!this.inventoryItem.InventoryName) {
       //Khi chưa nhập tên hàng hoá
       iconError.style.display="block";
       InventoryItemName.classList.add("border-red");
       this.isValid = false;
+      this.InventoryError.InventoryName = MISA_MSG.BLANK_FIELD;
     } else {
-      // Đã nhập tên hàng hoá
-      if(!this.InventoryItem.SKUCode && this.InventoryItem.InventoryName) {
-        this.generateInvetoryItemCode();
-      }
-      
-      iconError.style.display="none";
-      InventoryItemName.classList.remove("border-red");
-      this.isValid = true;
-    }
-  },
-  reverse(s:string){
-        return s.split("").reverse().join("");
-  },
-  inputPurchase() {
-    let number = this.InventoryItem.PurchasePrice ;
-    if (number) {
-      let str = number.toString();
-      str = this.reverse(str);
-      let showValue = str.match(/.{1,3}/g);
+      var format = /[`!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/;
+      // Kiểm tra nếu tồn tại kí tự đặc biệt trong tên
+      if (format.test(this.inventoryItem.InventoryName)) {
+        this.isValid = false;
+        iconError.style.display="block";
+        InventoryItemName.classList.add("border-red");
+        this.InventoryError.InventoryName = MISA_MSG.NAME_CONTAIN_SPECIAL_CHARACTER;
+      } else {
+        // Sinh mã SKU khi đã nhập tên hàng hoá
+        if(!this.inventoryItem.SKUCode && this.inventoryItem.InventoryName) {
+          this.generateInvetoryItemCode();
+        }
+        
+        iconError.style.display="none";
+        InventoryItemName.classList.remove("border-red");
+        this.isValid = true;
+        }
       
     }
-    
-  }
+  },
 },
 computed: {
-   ...mapGetters({
-      colors: "inventoriesDetailColor",
-    }),
+    
+  ...mapGetters({
+    colors: "inventoriesDetailColor",
+    success: "success"
+  }),
+  
+  parent():InventoryItem {
+    return this.inventoryItem;
+  }
 },
+
+
 })
 </script>

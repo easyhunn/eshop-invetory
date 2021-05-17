@@ -15,3 +15,9 @@ a {
   justify-content: center !important;
   align-items: center !important;
 }
+.text-align-right {
+  text-align: right !important;
+}
+.bold-text {
+  font-family: Roboto-bold;
+}

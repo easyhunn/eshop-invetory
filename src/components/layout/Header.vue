@@ -113,9 +113,10 @@ export default Vue.extend({
     }
   },
   watch: {
+    // Tiêu đề form thay đổi
+    //Created By: VM Hùng (17/05/2021)
     "$store.state.formType"() {  
       switch (this.$store.state.formType) {
-        
         case SaveType.Insert: 
         case SaveType.Duplicate: 
               this.type = "/Thêm mới"

@@ -13,7 +13,7 @@
           <div class="filter">
             <a
               class="filter-type-selected"
-              v-on:click="showFilterType.InventoryCode = true"
+              v-on:click="showFilterType.SKUCode = true"
             >
               {{ selectedFilter.SKUCodeType }}
             </a>
@@ -24,12 +24,12 @@
             />
             <div
               class="mask"
-              v-on:click="showFilterType.n = false"
-              v-if="showFilterType.nType"
+              v-on:click="showFilterType.SKUCode = false"
+              v-if="showFilterType.SKUCodeType"
             ></div>
           </div>
         </div>
-        <ul class="filter-combo" v-if="showFilterType.n">
+        <ul class="filter-combo" v-if="showFilterType.SKUCode">
           <li class="filter-type" v-on:click="changeFilterType('*', 1)">
             * : Chứa
           </li>
@@ -269,10 +269,6 @@
         </div>
         <div class="filter">
           <select
-            v-model="selectedFilter.Status"
-            @change="updateFilterType"
-            name=""
-            id=""
             class="filter-content"
           >
             <option value="-1">Tất cả</option>
@@ -305,7 +301,8 @@
       <table ref="Table">
         <tbody ref="Tbody">
           <tr class="h-row" v-for="(inventory, i) in inventories" :key="i" 
-                                    v-on:click="onRowSelect(inventory.InventoryId, inventory.InventoryName)" 
+                                    v-on:click="onRowSelect(inventory.InventoryId, inventory.InventoryName)"
+                                    v-on:dblclick="onRowDblClick(inventory.InventoryId)" 
                                     name="Bánh đậu xanh" :id="inventory.InventoryId">
             <td class="flex-center" style="min-width:18px; max-width:18px; margin-left: -1px">
               <input type="checkbox"
@@ -315,9 +312,16 @@
             </td>
             <td style="min-width:79px; max-width:79px;">{{inventory.SKUCode}}</td>
             <td
-              style="min-width:209px; flex-basis:calc(100vw - 1158px); flex-grow: 0; flex-shrink: 0"
+              v-on:click="onRowDblClick(inventory.InventoryId)"
+              style="min-width:209px; 
+                      flex-basis:calc(100vw - 1158px); 
+                      flex-grow: 0; 
+                      flex-shrink: 0;
+                      cursor:pointer;"
             >
-              <a href="#">{{inventory.InventoryName}}</a>
+              <a style="color:#636dde">
+                {{inventory.InventoryName}}
+              </a>
             </td>
             <td style="min-width:109px; max-width:109px;">
               {{inventory.InventoryGroup}}
@@ -325,8 +329,8 @@
             <td style="min-width:79px; max-width:79px;">
               {{inventory.Unit}}
             </td>
-            <td style="min-width:84px; max-width:84px;">
-              {{inventory.SalePrice}}
+            <td class="text-align-right" style="min-width:84px; max-width:84px;" :title="inventory.SalePrice | formatMoney">
+              {{inventory.SalePrice | formatMoney}}
             </td>
             <td style="min-width:154px; max-width:154px;">
               {{inventory.Display == 1 ? "có" : "không"}}
@@ -370,6 +374,11 @@
           </tr> -->
         </tbody>
       </table>
+      <ALertWarning 
+      style="z-index: 20;"
+      :SKUCode="errorMsg"
+      v-show="showAlertWarning" 
+      :closeAlert="hideAlertWarning"/>
     </div>
   </div>
 </template>
@@ -412,6 +421,7 @@
   background-color: transparent;
 }
 .h-cell .title {
+  font-family: Roboto-bold;
   padding: 7px 10px 6px;
   white-space: nowrap;
   color: #212121;
@@ -488,6 +498,8 @@ import { mapGetters } from "vuex";
 import {InventoryFilter} from "../../store/inventory-filter";
 import {InventoryStore} from "../../store/inventory";
 import CurrencyInput from "./currency-input.vue";
+import ALertWarning from "./alert-warning.vue";
+import MISA_CODE from "../../core/consts/misa-code";
 
 export default Vue.extend({
   name: "Table",
@@ -500,6 +512,7 @@ export default Vue.extend({
         phoneNumber: "",
         status: "3",
       },
+      //Kiểu lọc của filter đã chọn
       selectedFilter: {
         SKUCodeType: "*",
         SKUCode: "",
@@ -514,13 +527,15 @@ export default Vue.extend({
         Display: -1,
         Status: -1
       } ,
+      // Hiện danh sách thuộc tính lọc của kiểu chọn 
       showFilterType: {
-        n: false,
+        SKUCode: false,
         InventoryName: false,
         InventoryGroup: false,
         Unit: false,
         AveragePrice: false,
       },
+      showAlertWarning: false,
       startPosition: 0,
       pageSize: 15,
       pageIndex: 1,
@@ -532,9 +547,27 @@ export default Vue.extend({
     };
   },
   components: {
-    CurrencyInput
+    CurrencyInput,
+    ALertWarning
   },
   methods: {
+    // Hiện cảnh báo
+    //Created By: VM Hùng (17/05/2021)
+    displayAlertWaring () {
+      this.showAlertWarning = true;
+    },
+    // Ẩn cảnh báo
+    //Created By: VM Hùng (17/05/2021)
+    hideAlertWarning () {
+      this.showAlertWarning = false;
+      this.$store.commit("setSuccessStatus", true);
+    },
+    onRowDblClick(inventoryId:string) {
+      InventoryStore.commit("setInventoryId", inventoryId);
+      this.$emit("rowDblClick")
+    },
+    //Cài lại giá trị lọc của giá TB
+    //Created By: VM Hùng (17/05/2021)
     setFilterPrice(value:any) {
       if (!value) this.selectedFilter.SalePrice = -1;
       this.selectedFilter.SalePrice = value;
@@ -559,10 +592,12 @@ export default Vue.extend({
     // type: kiểu lọc
     // order: vị trí phần từ cần lọc trong đối tượng
     //</param>
+    //Created By: VM Hùng (14/05/2021)
+
     changeFilterType(type: string, order: number) {
       switch (order) {
         case 1:
-          this.showFilterType.n = false;
+          this.showFilterType.SKUCode = false;
           this.selectedFilter.SKUCodeType = type;
           break;
         case 2:
@@ -584,12 +619,19 @@ export default Vue.extend({
       }
       this.updateFilterType();
     },
+    //Cập nhật kiểu lọc 
+    //Created By: VM Hùng (14/05/2021)
     updateFilterType() {
+      // Chuyển trang cần lọc về 1
+      InventoryFilter.commit("setPageIndex", 1);
       InventoryFilter.commit("setFilterProperties", this.selectedFilter);
       this.$store.dispatch("getByPaging");
     },
     //Khi hàng được chọn
+    //Created By: VM Hùng (15/05/2021)
+
     onRowSelect (id:string, name:string) {
+
       //Kiểm trong list selected
       if (!this.listIdSelected.includes(this.selectedRow)) {
         //Xóa hiệu ứng selected từ hàng cũ
@@ -669,14 +711,25 @@ export default Vue.extend({
   computed: {
     ...mapGetters({
       inventories: "inventories",
+      success: "success",
+      errorMsg: "errorMsg"
     }),
   },
   watch: {
+    //Khi hàng được chọn thay đổi
+    //Created By: VM Hùng (15/05/2021)
     selectedRow() {
       InventoryStore.commit("setInventoryId", this.selectedRow);
       InventoryStore.commit("setInventoryName", this.ItemNameSelected);
 
-    }
+    },
+    // Kiểm tra lấy dữ liệu thành công
+    //Created By: VM Hùng (15/05/2021)
+    success() {
+      if (!this.success) {
+        if (this.$store.state.errorCode == MISA_CODE.BAD_REQUEST) this.displayAlertWaring();
+      }
+    },
   }
 });
 </script>

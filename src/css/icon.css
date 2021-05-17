@@ -138,6 +138,10 @@
     background: url("../assets/Icon/icon-popup.png");
     background-position: -111px -2px !important;
 }
+.icon-popup-warning {
+    background: url("../assets/Icon/icon-popup.png");
+    background-position: -56px -2px !important;
+}
 .m-icon-help {
     background: url("../assets/Icon/icon-popup.png");
     background-position: -165px -2px !important;
