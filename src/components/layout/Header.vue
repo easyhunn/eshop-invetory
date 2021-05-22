@@ -105,7 +105,7 @@
 </style>
 <script lang="ts">
 import Vue from 'vue'
-import {SaveType} from "../../core/enums/save-type";
+import {EditMode} from "../../core/enums/edit-mode";
 export default Vue.extend({
   data: function() {
     return {
@@ -117,11 +117,11 @@ export default Vue.extend({
     //Created By: VM Hùng (17/05/2021)
     "$store.state.formType"() {  
       switch (this.$store.state.formType) {
-        case SaveType.Insert: 
-        case SaveType.Duplicate: 
+        case EditMode.Insert: 
+        case EditMode.Duplicate: 
               this.type = "/Thêm mới"
               break;
-        case SaveType.Update:
+        case EditMode.Update:
           this.type = "/Sửa"
           break;
         default:

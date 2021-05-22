@@ -306,7 +306,7 @@
                                     name="Bánh đậu xanh" :id="inventory.InventoryId">
             <td class="flex-center" style="min-width:18px; max-width:18px; margin-left: -1px">
               <input type="checkbox"
-                v-on:change="checkBoxSelected(inventory.InventoryId, 'bánh đậu xanh', $event.target.checked)"
+                v-on:change="checkBoxSelected(inventory.InventoryId, inventory.InventoryName, $event.target.checked)"
                 :value="inventory.InventoryId"
               />
             </td>

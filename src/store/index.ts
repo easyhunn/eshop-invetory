@@ -132,23 +132,23 @@ export default new Vuex.Store({
     async InsertInventory(context, inventoryItem: InventoryItem) {
       if (inventoryItem.Status) inventoryItem.Status = 1;
       else inventoryItem.Status = 0;
-      // Thêm thông tin chi tiết bản ghi
-      if (this.state.inventoriesDetail.length > 0) {
-        for (let inventory of this.state.inventoriesDetail) {
-          
-          if (this.state.success) {
-            await this.dispatch("InsertInventoryDetail", inventory);
-          } else {
-            return;
-          }
-        }
-      }
+      // Thêm thông tin hàng hoá
       if (this.state.success) {
-        await context.commit("startLoading");
-
         await InventoryService.InsertInventory(inventoryItem)
-          .then((data: any) => {
-            // console.log("Thêm thành công");
+          .then(async (data: any) => {
+             // Thêm thông tin chi tiết bản ghi
+            if (this.state.inventoriesDetail.length > 0) {
+              for (let inventory of this.state.inventoriesDetail) {
+                if (this.state.success) {
+                  await this.dispatch("InsertInventoryDetail", inventory);
+                } else {
+                  return;
+                }
+              }
+            }
+            // Tải lại trang
+            if (this.state.success)
+            await this.dispatch("getByPaging");
           })
           .catch((e) => {
             context.commit("setError", [
@@ -156,9 +156,6 @@ export default new Vuex.Store({
               e.response.data.errorCode,
             ]);
           });
-        // Tải lại trang
-        await this.dispatch("getByPaging");
-        context.commit("stopLoading");
       }
     },
     // Thêm mới chi tiết hàng hoá (thêm/sửa)
@@ -185,30 +182,32 @@ export default new Vuex.Store({
     // Sửa thông tin hàng hoá
     // Created By: VM Hùng (16/05/2021)
     async UpdateInventory(context: any, inventoryItem: InventoryItem) {
-      await context.commit("startLoading");
-      // xoá thông tin chi tiết được chọn
-      // console.log(this.state.selectedInventoriesDetailId);
-      if (this.state.selectedInventoriesDetailId.length > 0) {
-        for (let inventoryId of this.state.selectedInventoriesDetailId) {
-         
-          if (inventoryId) await InventoryService.DeleteInventory(inventoryId);
-        }
-      }
-      // Thêm thông tin chi tiết bản ghi
-      if (this.state.inventoriesDetail.length > 0) {
-        for (let inventory of this.state.inventoriesDetail) {
-          
-          if (this.state.success)
-            await this.dispatch("InsertInventoryDetail", inventory);
-        }
-      }
+    
       if (this.state.success) {
         await InventoryService.UpdateInventory(
           InventoryStore.state.inventoryId,
           inventoryItem
         )
-          .then((data: any) => {
-            this.dispatch("getByPaging");
+          .then(async (data: any) => {
+            // xoá thông tin chi tiết được chọn
+            // console.log(this.state.selectedInventoriesDetailId);
+            if (this.state.selectedInventoriesDetailId.length > 0) {
+              for (let inventoryId of this.state.selectedInventoriesDetailId) {
+              
+                if (inventoryId) await InventoryService.DeleteInventory(inventoryId);
+              }
+            }
+            // Thêm/sửa thông tin chi tiết bản ghi
+            if (this.state.inventoriesDetail.length > 0) {
+              for (let inventory of this.state.inventoriesDetail) {
+     
+                if (this.state.success)
+                  await this.dispatch("InsertInventoryDetail", inventory);
+                else return;
+              }
+            }
+            if (this.state.success) this.dispatch("getByPaging");
+            
           })
           .catch((e) => {
             context.commit("setError", [
@@ -217,8 +216,6 @@ export default new Vuex.Store({
             ]);
           });
       }
-
-      context.commit("stopLoading");
     },
     // Xoá 1 hàng hoá
     // Created By: VM Hùng(16/05/2021)

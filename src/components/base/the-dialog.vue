@@ -388,27 +388,28 @@ import AutocompleteInput from './autocomplete-input.vue';
 import InputTag from "./input-tag.vue";
 import CommonFuncion from "../../services/common";
 import InventoryItem from "../../models/inventory-item";
-import {SaveType} from "../../core/enums/save-type";
+import {EditMode} from "../../core/enums/edit-mode";
 import InventoryService from "../../services/inventory-service";
 import {InventoryStore} from "../../store/inventory";
 import { mapGetters } from "vuex";
 import CurrencyInput from "./currency-input.vue";
 import MISA_MSG from "../../core/consts/misa-message";
+import MISA_CODE from '@/core/consts/misa-code';
 
 export default Vue.extend({
   
 data: function () {
     return {
         parentInventoryName: "",
-        formType: SaveType.Insert,
+        formType: EditMode.Insert,
         inventoryItem: {
           SKUCode: ""
         } as InventoryItem,
         items: ["đồ ăn", "đồ uống"],
         showSubtable: false,
         InventoryError: {
-          InventoryName: "Trường không được phép để trống",
-          SKUCode: "Mã SKU Đã bị trùng"
+          InventoryName: MISA_MSG.BLANK_FIELD,
+          SKUCode: MISA_MSG.DUPLICATE_SKUCODE
         },
         InventoryItemGroups: [
           {
@@ -467,12 +468,17 @@ methods: {
   async saveData() {
     await this.validateData();
     if (this.isValid) {
-      if (this.formType == SaveType.Insert || this.formType == SaveType.Duplicate) {
+      if (this.formType == EditMode.Insert || this.formType == EditMode.Duplicate) {
+
+
         await this.$store.dispatch("InsertInventory", this.inventoryItem);
+        
         if (this.success) this.$emit("close",1);
       }
-      if (this.formType == SaveType.Update) {
+      if (this.formType == EditMode.Update) {
+
         await this.$store.dispatch("UpdateInventory", this.inventoryItem);
+      
         if (this.success) this.$emit("close",1);
       }
     }
@@ -482,13 +488,17 @@ methods: {
   async saveAndAdd() {
     await this.validateData();
     if (this.isValid) {
-      if (this.formType == SaveType.Insert || this.formType == SaveType.Duplicate) {
+      if (this.formType == EditMode.Insert || this.formType == EditMode.Duplicate) {
+
+
         this.$store.dispatch("InsertInventory", this.inventoryItem);
         this.clearForm();
       } 
-      if (this.formType == SaveType.Update) {
+      if (this.formType == EditMode.Update) {
+
         this.$store.dispatch("UpdateInventory", this.inventoryItem);
-        this.formType = SaveType.Insert;
+        this.formType = EditMode.Insert;
+
         this.clearForm();
 
       }
@@ -499,13 +509,17 @@ methods: {
   async saveAndDuplicate() {
     await this.validateData();
     if (this.isValid) {
-      if (this.formType == SaveType.Insert || this.formType == SaveType.Duplicate) {
+      if (this.formType == EditMode.Insert || this.formType == EditMode.Duplicate) {
+
+
         await this.$store.dispatch("InsertInventory", this.inventoryItem);
         this.generateInvetoryItemCode();
       }
-      if (this.formType == SaveType.Update) {
+      if (this.formType == EditMode.Update) {
+
         this.$store.dispatch("UpdateInventory", this.inventoryItem);
-        this.formType = SaveType.Insert;
+        this.formType = EditMode.Insert;
+
         this.generateInvetoryItemCode();
       }
     }
@@ -602,18 +616,21 @@ methods: {
     this.$nextTick(() => this.focusFirstElement());
     this.formType = type;
     switch (type) {
-      case SaveType.Insert:
+      case EditMode.Insert:
+
         this.inventoryItem.Status = 1;
         this.clearForm();
         break;
-      case SaveType.Duplicate:
+      case EditMode.Duplicate:
+
         this.inventoryItem.Status = 1;
         await InventoryStore.dispatch("getByInventoryId");
         this.clearFormUI();
         this.setData(InventoryStore.state.inventory);
         this.generateInvetoryItemCode();
         break;
-      case SaveType.Update:
+      case EditMode.Update:
+
         await InventoryStore.dispatch("getByInventoryId");
         this.clearFormUI();
         this.setData(InventoryStore.state.inventory);

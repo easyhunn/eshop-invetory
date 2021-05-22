@@ -17,7 +17,10 @@
         <tr v-for="(Inventory, i) in inventoriesDetail" :key="i">
           <td
             class="edit-able"
-            style="min-width:363px; flex-basis:calc(100% - 605px); flex-grow: 0; flex-shrink: 0"
+            style="min-width:363px; 
+            flex-basis:calc(100% - 605px); 
+            flex-grow: 0; 
+            flex-shrink: 0"
           >
             {{ Inventory.InventoryName }}
             <input
